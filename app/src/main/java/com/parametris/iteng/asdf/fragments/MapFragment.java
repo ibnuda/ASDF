@@ -1,4 +1,4 @@
-package com.parametris.iteng.asdf;
+package com.parametris.iteng.asdf.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -10,6 +10,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.parametris.iteng.asdf.R;
 
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
