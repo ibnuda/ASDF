@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item android:title="Menu">
+            <menu>
+                <item
+                    android:id="@+id/nav_chat"
+                    android:title="Chat"></item>
+                <item
+                    android:id="@+id/nav_condition"
+                    android:title="Condition"></item>
+            </menu>
+        </item>
+        <item android:title="Map-thingy">
+            <menu>
+                <item
+                    android:id="@+id/nav_map"
+                    android:title="Map"></item>
+            </menu>
+        </item>
+    </group>
+</menu>
