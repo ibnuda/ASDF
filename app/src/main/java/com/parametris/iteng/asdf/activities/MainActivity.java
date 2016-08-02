@@ -1,6 +1,12 @@
 package com.parametris.iteng.asdf.activities;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.os.SystemClock;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -11,16 +17,24 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.parametris.iteng.asdf.R;
 import com.parametris.iteng.asdf.fragments.ChatFragment;
 import com.parametris.iteng.asdf.fragments.ConditionFragment;
 import com.parametris.iteng.asdf.fragments.MapFragment;
+import com.parametris.iteng.asdf.track.LokAlarmReceiver;
 
 public class MainActivity extends AppCompatActivity {
     Toolbar toolbar;
     NavigationView nvDrawer;
     DrawerLayout dlDrawer;
     ActionBarDrawerToggle drawerToggle;
+
+    boolean trackingNow;
+    AlarmManager alarmManager;
+    Intent trackIntent;
+    PendingIntent pendingIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +59,35 @@ public class MainActivity extends AppCompatActivity {
         nvDrawer.getMenu().getItem(0).setChecked(true);
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction().replace(R.id.flContent, new ConditionFragment()).commit();
+
+        SharedPreferences sharedPreferences = this.getSharedPreferences("asdf", MODE_PRIVATE);
+        trackingNow = sharedPreferences.getBoolean("trackingNow", false);
+        boolean firstTime = sharedPreferences.getBoolean("firstTime", true);
+
+        if (firstTime) {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putBoolean("firstTime", false);
+            editor.putString("username", "TODO");
+            editor.apply();
+        }
+        trackLocation();
+    }
+
+    private void trackLocation() {
+        if (!googlePlayEnabled()) return;
+        startAlarmManager();
+    }
+
+    private void startAlarmManager() {
+        Context context = getBaseContext();
+        alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        trackIntent = new Intent(context, LokAlarmReceiver.class);
+        pendingIntent = PendingIntent.getBroadcast(context, 0, trackIntent, 0);
+        alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime(), 1 * 1000, pendingIntent);
+    }
+
+    private boolean googlePlayEnabled() {
+        return GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS;
     }
 
     private void setupDrawerContent(NavigationView navigationView) {
