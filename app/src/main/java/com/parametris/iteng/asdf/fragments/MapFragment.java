@@ -1,65 +1,38 @@
 package com.parametris.iteng.asdf.fragments;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.Criteria;
+import android.content.SharedPreferences;
+import android.graphics.Camera;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.parametris.iteng.asdf.R;
 
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
+    String TAG = "MapFragment";
     GoogleMap myGoogleMap;
     MapView mapView;
     boolean mapSupported;
     LocationManager locationManager;
     Location here;
-
-    /*
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.fragment_map);
-        // mapView = (MapView) getSupportFragmentManager().findFragmentById(R.id.map_view);
-        // SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_view);
-        // supportMapFragment.getMapAsync(this);
-    }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-        String bestProvider = locationManager.getBestProvider(criteria, true);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        here = locationManager.getLastKnownLocation(bestProvider);
-
-        LatLng currentPosition = new LatLng(here.getLatitude(), here.getLongitude());
-
-        myGoogleMap = googleMap;
-        myGoogleMap.addMarker(new MarkerOptions().position(currentPosition).title("Position at the moment"));
-        myGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(currentPosition));
-    }
-    */
+    TextView textViewHereIAm;
+    CameraUpdate cameraUpdate;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         try {
-            MapsInitializer.initialize(getActivity());
+            MapsInitializer.initialize(this.getActivity());
         } catch (Exception e) {
             mapSupported = false;
         }
@@ -82,25 +55,27 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
         mapView = (MapView) view.findViewById(R.id.map_view);
         mapView.onCreate(savedInstanceState);
+
+        textViewHereIAm = (TextView) view.findViewById(R.id.text_view_here_i_am);
+
+        // Here be dragons.
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("asdf", Context.MODE_PRIVATE);
+
+        float lat = sharedPreferences.getFloat("prevLat", 0.0f);
+        float lon = sharedPreferences.getFloat("prevLong", 0.0f);
+        Log.d(TAG, "onCreateView: lat : " + Float.toString(lat) + ", lon : " + Float.toString(lon));
+        LatLng here = new LatLng(lat, lon);
+        textViewHereIAm.setText(here.toString());
         initializeMap();
+        cameraUpdate = CameraUpdateFactory
+                .newLatLngZoom(here, 11);
         return view;
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-        String bestProvider = locationManager.getBestProvider(criteria, true);
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        here = locationManager.getLastKnownLocation(bestProvider);
-
-        LatLng currentPosition = new LatLng(here.getLatitude(), here.getLongitude());
-
         myGoogleMap = googleMap;
-        myGoogleMap.addMarker(new MarkerOptions().position(currentPosition).title("Position at the moment"));
-        myGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(currentPosition));
+        myGoogleMap.animateCamera(cameraUpdate);
     }
 
     @Override

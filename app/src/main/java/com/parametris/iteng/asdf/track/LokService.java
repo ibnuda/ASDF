@@ -54,21 +54,21 @@ public class LokService extends Service implements GoogleApiClient.ConnectionCal
     }
 
     private void startTracking() {
-        Log.d(TAG, "startTracking");
+        // Log.d(TAG, "startTracking");
 
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) != ConnectionResult.SUCCESS)
             Log.d(TAG, "unable to connect.");
         else {
-            Log.d(TAG, "startTracking, creating googleApiClient.");
+            // Log.d(TAG, "startTracking, creating googleApiClient.");
             googleApiClient = new GoogleApiClient.Builder(this).addApi(LocationServices.API)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .build();
 
-            Log.d(TAG, "startTracking, connecting googleApiClient to the server.");
+            // Log.d(TAG, "startTracking, connecting googleApiClient to the server.");
             if (!googleApiClient.isConnecting() || !googleApiClient.isConnected())
                 googleApiClient.connect();
-            Log.d(TAG, "startTracking, googleApiClient connected.");
+            // Log.d(TAG, "startTracking, googleApiClient connected.");
         }
     }
 
@@ -79,7 +79,7 @@ public class LokService extends Service implements GoogleApiClient.ConnectionCal
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Log.d(TAG, "onConnected");
+        // Log.d(TAG, "onConnected");
 
         locationRequest = LocationRequest.create();
         locationRequest.setInterval(1000);
@@ -99,7 +99,7 @@ public class LokService extends Service implements GoogleApiClient.ConnectionCal
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.d(TAG, "Checking location.");
+        // Log.d(TAG, "Checking location.");
         if (location == null) {
             Log.e(TAG, "Couldn't find the location.");
             return;
@@ -116,7 +116,7 @@ public class LokService extends Service implements GoogleApiClient.ConnectionCal
         dateFormat.setTimeZone(TimeZone.getDefault());
         Date date = new Date(location.getTime());
 
-        SharedPreferences prefs = this.getSharedPreferences("lokjav", Context.MODE_PRIVATE);
+        SharedPreferences prefs = this.getSharedPreferences("asdf", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
         float totalDistance = prefs.getFloat("totalDistance", 0f);
@@ -125,8 +125,8 @@ public class LokService extends Service implements GoogleApiClient.ConnectionCal
         if (firstTimePosition) editor.putBoolean("firstTimePosition", false);
         else {
             Location prevLocation = new Location("");
-            prevLocation.setLatitude(prefs.getFloat("prefLat", 0f));
-            prevLocation.setLongitude(prefs.getFloat("prefLong", 0f));
+            prevLocation.setLatitude(prefs.getFloat("prevLat", 0f));
+            prevLocation.setLongitude(prefs.getFloat("prevLong", 0f));
 
             float distance = location.distanceTo(prevLocation);
             totalDistance += distance;
@@ -145,9 +145,9 @@ public class LokService extends Service implements GoogleApiClient.ConnectionCal
         if (totalDistance > 0) requestParams.put("distance", totalDistance);
         else requestParams.put("distance", 0.0);
 
-        requestParams.put("username", prefs.getString("username", ""));
-        requestParams.put("phonenumber", prefs.getString("appId", ""));
-        requestParams.put("sessionid", prefs.getString("sessionId", ""));
+        requestParams.put("username", prefs.getString("username", "TODO"));
+        requestParams.put("phonenumber", prefs.getString("appId", "TODO"));
+        requestParams.put("sessionid", prefs.getString("sessionId", "TODO"));
         requestParams.put("accuracy", Float.toString(location.getAccuracy()));
         requestParams.put("altitude", Double.toString(location.getAltitude()));
         requestParams.put("password", "parametrik2016");
