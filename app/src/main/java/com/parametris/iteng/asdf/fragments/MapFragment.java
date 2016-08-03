@@ -9,6 +9,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +26,34 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     boolean mapSupported;
     LocationManager locationManager;
     Location here;
+
+    /*
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.fragment_map);
+        // mapView = (MapView) getSupportFragmentManager().findFragmentById(R.id.map_view);
+        // SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_view);
+        // supportMapFragment.getMapAsync(this);
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+        String bestProvider = locationManager.getBestProvider(criteria, true);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        here = locationManager.getLastKnownLocation(bestProvider);
+
+        LatLng currentPosition = new LatLng(here.getLatitude(), here.getLongitude());
+
+        myGoogleMap = googleMap;
+        myGoogleMap.addMarker(new MarkerOptions().position(currentPosition).title("Position at the moment"));
+        myGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(currentPosition));
+    }
+    */
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -52,6 +81,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
         mapView = (MapView) view.findViewById(R.id.map_view);
+        mapView.onCreate(savedInstanceState);
         initializeMap();
         return view;
     }
@@ -61,6 +91,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         Criteria criteria = new Criteria();
         String bestProvider = locationManager.getBestProvider(criteria, true);
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
         here = locationManager.getLastKnownLocation(bestProvider);
 
         LatLng currentPosition = new LatLng(here.getLatitude(), here.getLongitude());
@@ -70,4 +103,21 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         myGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(currentPosition));
     }
 
+    @Override
+    public void onResume() {
+        mapView.onResume();
+        super.onResume();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mapView.onDestroy();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
 }
