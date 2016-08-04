@@ -21,4 +21,8 @@
     <string name="text_view_ammo">TEXT VIEW AMMO</string>
     <string name="text_view_condition">TEXT VIEW CONDITION</string>
     <string name="title_activity_maps">Map</string>
+    <string name="condition">Condition</string>
+    <string name="ammunition">Ammunition</string>
+    <string name="_100">100</string>
+    <string name="_90">90</string>
 </resources>

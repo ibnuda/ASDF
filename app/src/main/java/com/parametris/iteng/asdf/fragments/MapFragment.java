@@ -2,12 +2,8 @@ package com.parametris.iteng.asdf.fragments;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Camera;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,13 +16,13 @@ import com.parametris.iteng.asdf.R;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
     String TAG = "MapFragment";
-    GoogleMap myGoogleMap;
+    GoogleMap googleMap;
     MapView mapView;
     boolean mapSupported;
-    LocationManager locationManager;
-    Location here;
     TextView textViewHereIAm;
     CameraUpdate cameraUpdate;
+    SharedPreferences sharedPreferences;
+
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -44,7 +40,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void initializeMap() {
-        if (myGoogleMap == null && mapSupported) {
+        if (googleMap == null && mapSupported) {
             mapView = (MapView) getActivity().findViewById(R.id.map_view);
             mapView.getMapAsync(this);
         }
@@ -53,30 +49,29 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+        sharedPreferences = getActivity().getSharedPreferences("asdf", Context.MODE_PRIVATE);
         mapView = (MapView) view.findViewById(R.id.map_view);
         mapView.onCreate(savedInstanceState);
-
         textViewHereIAm = (TextView) view.findViewById(R.id.text_view_here_i_am);
-
-        // Here be dragons.
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("asdf", Context.MODE_PRIVATE);
 
         float lat = sharedPreferences.getFloat("prevLat", 0.0f);
         float lon = sharedPreferences.getFloat("prevLong", 0.0f);
-        Log.d(TAG, "onCreateView: lat : " + Float.toString(lat) + ", lon : " + Float.toString(lon));
+
         LatLng here = new LatLng(lat, lon);
         textViewHereIAm.setText(here.toString());
+
         initializeMap();
-        cameraUpdate = CameraUpdateFactory
-                .newLatLngZoom(here, 11);
+        cameraUpdate = CameraUpdateFactory.newLatLngZoom(here, 12);
+
         return view;
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        myGoogleMap = googleMap;
-        myGoogleMap.animateCamera(cameraUpdate);
+        this.googleMap = googleMap;
+        this.googleMap.animateCamera(cameraUpdate);
     }
+
 
     @Override
     public void onResume() {
