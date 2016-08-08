@@ -22,7 +22,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.parametris.iteng.asdf.R;
 import com.parametris.iteng.asdf.fragments.ChatFragment;
 import com.parametris.iteng.asdf.fragments.ConditionFragment;
-import com.parametris.iteng.asdf.fragments.MapFragment;
+import com.parametris.iteng.asdf.fragments.MyMapFragment;
 import com.parametris.iteng.asdf.track.LokAlarmReceiver;
 
 public class MainActivity extends AppCompatActivity {
@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
         nvDrawer.getMenu().getItem(0).setChecked(true);
         FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.flContent, new MapFragment()).commit();
+        fragmentManager.beginTransaction().replace(R.id.flContent, new MyMapFragment()).commit();
 
         SharedPreferences sharedPreferences = this.getSharedPreferences("asdf", MODE_PRIVATE);
         trackingNow = sharedPreferences.getBoolean("trackingNow", false);
@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
                 fragmentClass = ConditionFragment.class;
                 break;
             case R.id.nav_map:
-                fragmentClass = MapFragment.class;
+                fragmentClass = MyMapFragment.class;
                 break;
             default:
                 fragmentClass = ConditionFragment.class;
