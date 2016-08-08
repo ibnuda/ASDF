@@ -1,6 +1,7 @@
 package com.parametris.iteng.asdf.track;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -12,17 +13,21 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.server.converter.StringToIntConverter;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
+import com.parametris.iteng.asdf.R;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -40,6 +45,10 @@ public class LokService extends Service implements GoogleApiClient.ConnectionCal
     private boolean processNow = false;
     private LocationRequest locationRequest;
     private GoogleApiClient googleApiClient;
+
+    public static final String YUHU = LokService.class.getName() + "YUHU";
+
+    private Context context;
 
     public LokService() {
     }
@@ -108,6 +117,11 @@ public class LokService extends Service implements GoogleApiClient.ConnectionCal
         if (location.getAccuracy() > 500.0f) return;
         stopLocationUpdate();
         sendData(location);
+        // here be dragons
+        Intent intent = new Intent(YUHU);
+        intent.putExtra("lat", location.getLatitude());
+        intent.putExtra("lon", location.getLongitude());
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     // FIXME: 2016-01-29 Refaktor method sendData

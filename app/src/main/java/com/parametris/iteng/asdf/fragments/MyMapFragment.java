@@ -1,21 +1,27 @@
 package com.parametris.iteng.asdf.fragments;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.*;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.parametris.iteng.asdf.R;
+import com.parametris.iteng.asdf.track.LokService;
 
 
 public class MyMapFragment extends Fragment implements OnMapReadyCallback {
@@ -23,9 +29,10 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
     GoogleMap googleMap;
     MapView mapView;
     boolean mapSupported;
-    TextView textViewHereIAm;
+    public TextView textViewHereIAm;
     CameraUpdate cameraUpdate;
     SharedPreferences sharedPreferences;
+    Marker marker;
 
 
     @Override
@@ -67,6 +74,27 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
 
         initializeMap();
 
+        LocalBroadcastManager.getInstance(getContext()).registerReceiver(
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        if (marker != null) {
+                            marker.remove();
+                        }
+                        double lat = intent.getDoubleExtra("lat", 0);
+                        double lon = intent.getDoubleExtra("lon", 0);
+                        LatLng here = new LatLng(lat, lon);
+
+                        marker = googleMap.addMarker(new MarkerOptions()
+                                .position(here).title("Here I am."));
+                        marker.setVisible(true);
+                        cameraUpdate = CameraUpdateFactory.newLatLngZoom(here, 15);
+                        googleMap.animateCamera(cameraUpdate);
+                        googleMap.moveCamera(cameraUpdate);
+                        textViewHereIAm.setText(here.toString());
+                    }
+                }, new IntentFilter(LokService.YUHU)
+        );
         return view;
     }
 
@@ -78,29 +106,25 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
         }
         if (googleMap != null) {
             googleMap.getUiSettings().setMyLocationButtonEnabled(true);
-        }
-        if (googleMap != null) {
-            googleMap.getUiSettings().setCompassEnabled(true);
-        }
-        if (googleMap != null) {
             googleMap.getUiSettings().setZoomControlsEnabled(true);
+            googleMap.getUiSettings().setCompassEnabled(true);
         }
         float lat = sharedPreferences.getFloat("prevLat", 0.0f);
         float lon = sharedPreferences.getFloat("prevLong", 0.0f);
         LatLng here = new LatLng(lat, lon);
         Log.d(TAG, "onMapReady: here : " + here.toString());
-        cameraUpdate = CameraUpdateFactory.newLatLngZoom(here, 12);
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(here).zoom(12).build();
-        Log.d(TAG, "onMapReady: cameraUpdate : " + cameraUpdate);
-        Marker marker = googleMap.addMarker(new MarkerOptions().position(here).draggable(true));
-        Log.d(TAG, "onMapReady: marker : " + marker.getTitle());
-        Log.d(TAG, "onMapReady: marker : " + marker.getPosition());
+        cameraUpdate = CameraUpdateFactory.newLatLngZoom(here, 15);
+
+        // these two lines shows the marker.
+        marker = googleMap.addMarker(new MarkerOptions()
+                .position(here)
+                .title("Here I am.")
+                .draggable(true));
         marker.setVisible(true);
-        // googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+        googleMap.animateCamera(cameraUpdate);
         googleMap.moveCamera(cameraUpdate);
     }
-
 
     @Override
     public void onResume() {
@@ -119,4 +143,19 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
         super.onLowMemory();
         mapView.onLowMemory();
     }
+
+    /*
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.d(TAG, "onLocationChanged: location changed.");
+        LatLng here = new LatLng(location.getLatitude(), location.getLongitude());
+        Marker marker = googleMap.addMarker(new MarkerOptions()
+                .position(here).title("Here I am."));
+        marker.setVisible(true);
+        cameraUpdate = CameraUpdateFactory.newLatLngZoom(here, 15);
+        googleMap.animateCamera(cameraUpdate);
+        googleMap.moveCamera(cameraUpdate);
+        textViewHereIAm.setText(here.toString());
+    }
+    */
 }
