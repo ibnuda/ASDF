@@ -7,20 +7,24 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.parametris.iteng.asdf.R;
 
-public class HealthFragment extends Fragment implements SeekBar.OnSeekBarChangeListener {
+public class HealthFragment extends Fragment { // implements SeekBar.OnSeekBarChangeListener {
 
+    Spinner spinner;
+    ArrayAdapter<CharSequence> mAdapter;
     private static int seekValue = 10;
     TextView textViewCondition;
     TextView textViewAmmunition;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_health, container, false);
+        /*
         final SeekBar seekBarCondition = (SeekBar) view.findViewById(R.id.seek_bar_condition);
         final SeekBar seekBarAmmunition = (SeekBar) view.findViewById(R.id.seek_bar_ammunition);
 
@@ -37,9 +41,16 @@ public class HealthFragment extends Fragment implements SeekBar.OnSeekBarChangeL
 
         seekBarCondition.setOnSeekBarChangeListener(this);
         seekBarAmmunition.setOnSeekBarChangeListener(this);
+        */
+        View view = inflater.inflate(R.layout.fragment_health, container, false);
+        mAdapter = ArrayAdapter.createFromResource(getContext(), R.array.soulja_conditions, R.layout.support_simple_spinner_dropdown_item);
+        spinner = (Spinner) view.findViewById(R.id.spinner_health);
+        spinner.setAdapter(mAdapter);
         return view;
     }
 
+    // TODO: save on change.
+    /*
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
@@ -71,4 +82,5 @@ public class HealthFragment extends Fragment implements SeekBar.OnSeekBarChangeL
     public void onStopTrackingTouch(SeekBar seekBar) {
 
     }
+    */
 }
