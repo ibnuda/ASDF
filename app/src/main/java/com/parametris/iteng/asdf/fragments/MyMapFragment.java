@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
@@ -16,7 +15,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -103,7 +101,10 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
                             route.remove();
                         }
                         routePoints.add(here);
-                        route = googleMap.addPolyline(new PolylineOptions().width(2).color(Color.BLACK).geodesic(true));
+                        route = googleMap.addPolyline(new PolylineOptions()
+                                .width(2)
+                                .color(Color.BLACK)
+                                .geodesic(true));
                         route.setPoints(routePoints);
                         textViewHereIAm.setText(here.toString());
                     }

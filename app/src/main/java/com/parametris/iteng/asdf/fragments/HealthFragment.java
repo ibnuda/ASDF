@@ -12,7 +12,7 @@ import android.widget.TextView;
 
 import com.parametris.iteng.asdf.R;
 
-public class ConditionFragment extends Fragment implements SeekBar.OnSeekBarChangeListener {
+public class HealthFragment extends Fragment implements SeekBar.OnSeekBarChangeListener {
 
     private static int seekValue = 10;
     TextView textViewCondition;

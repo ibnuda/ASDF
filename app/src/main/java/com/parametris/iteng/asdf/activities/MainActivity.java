@@ -20,9 +20,11 @@ import android.view.MenuItem;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.parametris.iteng.asdf.R;
+import com.parametris.iteng.asdf.fragments.AmmunitionFragment;
 import com.parametris.iteng.asdf.fragments.ChatFragment;
-import com.parametris.iteng.asdf.fragments.ConditionFragment;
+import com.parametris.iteng.asdf.fragments.HealthFragment;
 import com.parametris.iteng.asdf.fragments.MyMapFragment;
+import com.parametris.iteng.asdf.fragments.SendFileFragment;
 import com.parametris.iteng.asdf.track.LokAlarmReceiver;
 
 public class MainActivity extends AppCompatActivity {
@@ -102,17 +104,26 @@ public class MainActivity extends AppCompatActivity {
 
         Class fragmentClass;
         switch(menuItem.getItemId()) {
-            case R.id.nav_chat:
-                fragmentClass = ChatFragment.class;
-                break;
-            case R.id.nav_condition:
-                fragmentClass = ConditionFragment.class;
-                break;
-            case R.id.nav_map:
+            case R.id.nav_home_map:
                 fragmentClass = MyMapFragment.class;
                 break;
+            case R.id.nav_condition_health:
+                fragmentClass = HealthFragment.class;
+                break;
+            case R.id.nav_condition_ammunition:
+                fragmentClass = AmmunitionFragment.class;
+                break;
+            case R.id.nav_communication_chat:
+                fragmentClass = ChatFragment.class;
+                break;
+            case R.id.nav_communicator_send_file:
+                fragmentClass = SendFileFragment.class;
+                break;
+            case R.id.nav_condition:
+                fragmentClass = HealthFragment.class;
+                break;
             default:
-                fragmentClass = ConditionFragment.class;
+                fragmentClass = MyMapFragment.class;
         }
 
         try {

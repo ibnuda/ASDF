@@ -25,4 +25,11 @@
     <string name="ammunition">Ammunition</string>
     <string name="_100">100</string>
     <string name="_90">90</string>
+    <string name="send_file">Send File</string>
+    <string name="chat">Chat</string>
+    <string name="communication">Communication</string>
+    <string name="menu">Menu</string>
+    <string name="health">Health</string>
+    <string name="status">Status</string>
+    <string name="map">Map</string>
 </resources>
