@@ -20,7 +20,7 @@ public class HealthFragment extends Fragment implements SeekBar.OnSeekBarChangeL
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_condition, container, false);
+        View view = inflater.inflate(R.layout.fragment_health, container, false);
         final SeekBar seekBarCondition = (SeekBar) view.findViewById(R.id.seek_bar_condition);
         final SeekBar seekBarAmmunition = (SeekBar) view.findViewById(R.id.seek_bar_ammunition);
 

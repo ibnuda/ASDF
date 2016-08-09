@@ -4,10 +4,42 @@
     android:layout_height="match_parent"
     tools:context="com.parametris.iteng.asdf.fragments.AmmunitionFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:padding="20dp">
+        <LinearLayout
+            android:id="@+id/ammunition_placement"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_weight="1"
+                android:text="@string/ammunition"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:allowUndo="true"
+                android:paddingTop="150dp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_below="@id/ammunition_placement"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <Spinner
+                android:id="@+id/spinner_ammunition"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="20dp"
+                android:longClickable="false"
+                android:gravity="center">
+            </Spinner>
+
+        </LinearLayout>
+
+    </RelativeLayout>
 
 </FrameLayout>
