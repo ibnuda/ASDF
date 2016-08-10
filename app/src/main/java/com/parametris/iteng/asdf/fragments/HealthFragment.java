@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
 import android.widget.Spinner;
@@ -14,7 +15,7 @@ import android.widget.TextView;
 
 import com.parametris.iteng.asdf.R;
 
-public class HealthFragment extends Fragment { // implements SeekBar.OnSeekBarChangeListener {
+public class HealthFragment extends Fragment implements AdapterView.OnItemSelectedListener { // implements SeekBar.OnSeekBarChangeListener {
 
     Spinner spinner;
     ArrayAdapter<CharSequence> mAdapter;
@@ -46,10 +47,38 @@ public class HealthFragment extends Fragment { // implements SeekBar.OnSeekBarCh
         mAdapter = ArrayAdapter.createFromResource(getContext(), R.array.soulja_conditions, R.layout.support_simple_spinner_dropdown_item);
         spinner = (Spinner) view.findViewById(R.id.spinner_health);
         spinner.setAdapter(mAdapter);
+
+        int spinnerPosition = uYeah(mAdapter, "health");
+
+        spinner.setSelection(spinnerPosition);
+
+        spinner.setOnItemSelectedListener(this);
         return view;
     }
 
-    // TODO: save on change.
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("asdf", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt("health", Integer.valueOf(parent.getItemAtPosition(position).toString()));
+        editor.apply();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
+    }
+
+    public int uYeah(ArrayAdapter<CharSequence> mAdapter, String apa) {
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("asdf", Context.MODE_PRIVATE);
+        int ammunition = sharedPreferences.getInt(apa, 100);
+        int mod = ammunition % 20;
+        ammunition -= mod;
+
+        int spinnerPosition = mAdapter.getPosition(String.valueOf(ammunition));
+
+        return spinnerPosition;
+    }
     /*
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {

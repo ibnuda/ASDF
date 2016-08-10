@@ -41,6 +41,8 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
     List<LatLng> routePoints = new ArrayList<LatLng>();
     Polyline route;
 
+    // TODO : Save the track history.
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,7 +96,7 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
                         marker = googleMap.addMarker(new MarkerOptions()
                                 .position(here).title("Here I am."));
                         marker.setVisible(true);
-                        cameraUpdate = CameraUpdateFactory.newLatLngZoom(here, 15);
+                        cameraUpdate = CameraUpdateFactory.newLatLng(here);
                         googleMap.animateCamera(cameraUpdate);
                         googleMap.moveCamera(cameraUpdate);
                         if (route != null) {
@@ -102,7 +104,7 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
                         }
                         routePoints.add(here);
                         route = googleMap.addPolyline(new PolylineOptions()
-                                .width(2)
+                                .width(10)
                                 .color(Color.BLACK)
                                 .geodesic(true));
                         route.setPoints(routePoints);
@@ -129,7 +131,7 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
         LatLng here = new LatLng(lat, lon);
         routePoints.add(here);
         Log.d(TAG, "onMapReady: here : " + here.toString());
-        cameraUpdate = CameraUpdateFactory.newLatLngZoom(here, 15);
+        cameraUpdate = CameraUpdateFactory.newLatLngZoom(here, 19);
 
         // these two lines shows the marker.
         marker = googleMap.addMarker(new MarkerOptions()
@@ -139,7 +141,10 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
         marker.setVisible(true);
 
         // while these ones shows the tracks.
-        route = googleMap.addPolyline(new PolylineOptions().width(2).color(Color.BLACK).geodesic(true));
+        route = googleMap.addPolyline(new PolylineOptions()
+                .width(10)
+                .color(Color.BLACK)
+                .geodesic(true));
 
         route.setPoints(routePoints);
 

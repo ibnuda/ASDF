@@ -119,9 +119,11 @@ public class MainActivity extends AppCompatActivity {
             case R.id.nav_communicator_send_file:
                 fragmentClass = SendFileFragment.class;
                 break;
+            /*
             case R.id.nav_condition:
                 fragmentClass = HealthFragment.class;
                 break;
+            */
             default:
                 fragmentClass = MyMapFragment.class;
         }
