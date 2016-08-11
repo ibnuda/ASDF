@@ -44,7 +44,9 @@ public class HealthFragment extends Fragment implements AdapterView.OnItemSelect
         seekBarAmmunition.setOnSeekBarChangeListener(this);
         */
         View view = inflater.inflate(R.layout.fragment_health, container, false);
-        mAdapter = ArrayAdapter.createFromResource(getContext(), R.array.soulja_conditions, R.layout.support_simple_spinner_dropdown_item);
+        mAdapter = ArrayAdapter.createFromResource(getContext(),
+                R.array.soulja_conditions,
+                R.layout.support_simple_spinner_dropdown_item);
         spinner = (Spinner) view.findViewById(R.id.spinner_health);
         spinner.setAdapter(mAdapter);
 
@@ -58,7 +60,8 @@ public class HealthFragment extends Fragment implements AdapterView.OnItemSelect
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("asdf", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getActivity()
+                .getSharedPreferences("asdf", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putInt("health", Integer.valueOf(parent.getItemAtPosition(position).toString()));
         editor.apply();
@@ -70,14 +73,13 @@ public class HealthFragment extends Fragment implements AdapterView.OnItemSelect
     }
 
     public int uYeah(ArrayAdapter<CharSequence> mAdapter, String apa) {
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("asdf", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getActivity()
+                .getSharedPreferences("asdf", Context.MODE_PRIVATE);
         int ammunition = sharedPreferences.getInt(apa, 100);
         int mod = ammunition % 20;
         ammunition -= mod;
 
-        int spinnerPosition = mAdapter.getPosition(String.valueOf(ammunition));
-
-        return spinnerPosition;
+        return mAdapter.getPosition(String.valueOf(ammunition));
     }
     /*
     @Override

@@ -40,7 +40,8 @@ public class AmmunitionFragment extends Fragment implements AdapterView.OnItemSe
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("asdf", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getActivity()
+                .getSharedPreferences("asdf", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putInt("ammunition", Integer.valueOf(parent.getItemAtPosition(position).toString()));
         editor.apply();
@@ -52,13 +53,12 @@ public class AmmunitionFragment extends Fragment implements AdapterView.OnItemSe
     }
 
     public int uYeah(ArrayAdapter<CharSequence> mAdapter, String apa) {
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("asdf", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getActivity()
+                .getSharedPreferences("asdf", Context.MODE_PRIVATE);
         int ammunition = sharedPreferences.getInt(apa, 100);
         int mod = ammunition % 20;
         ammunition -= mod;
 
-        int spinnerPosition = mAdapter.getPosition(String.valueOf(ammunition));
-
-        return spinnerPosition;
+        return mAdapter.getPosition(String.valueOf(ammunition));
     }
 }

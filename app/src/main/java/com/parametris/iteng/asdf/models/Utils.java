@@ -2,15 +2,10 @@ package com.parametris.iteng.asdf.models;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import java.util.ArrayList;
 
 import io.realm.Realm;
-import io.realm.RealmConfiguration;
 import io.realm.RealmResults;
 
-/**
- * Created by DELL on 8/11/2016.
- */
 public class Utils {
 
     public void addLatLangAtTheTime(Realm realm, final LatLng latLng) {
@@ -24,7 +19,7 @@ public class Utils {
         });
     }
 
-    public RealmResults<LatLangAtTheTime> getAllLatLangsAtTheTime(Realm realm) {
+    public RealmResults<LatLangAtTheTime> getAllLatLangAtTheTime(Realm realm) {
         return realm.where(LatLangAtTheTime.class).findAll();
     }
 }

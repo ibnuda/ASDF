@@ -25,7 +25,11 @@ import com.parametris.iteng.asdf.fragments.ChatFragment;
 import com.parametris.iteng.asdf.fragments.HealthFragment;
 import com.parametris.iteng.asdf.fragments.MyMapFragment;
 import com.parametris.iteng.asdf.fragments.SendFileFragment;
+import com.parametris.iteng.asdf.models.Utils;
 import com.parametris.iteng.asdf.track.LokAlarmReceiver;
+
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
 
 public class MainActivity extends AppCompatActivity {
     Toolbar toolbar;
@@ -37,6 +41,10 @@ public class MainActivity extends AppCompatActivity {
     AlarmManager alarmManager;
     Intent trackIntent;
     PendingIntent pendingIntent;
+
+    Realm realm;
+    RealmConfiguration realmConfiguration;
+    Utils utils;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +89,8 @@ public class MainActivity extends AppCompatActivity {
         alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         trackIntent = new Intent(context, LokAlarmReceiver.class);
         pendingIntent = PendingIntent.getBroadcast(context, 0, trackIntent, 0);
-        alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime(), 1 * 1000, pendingIntent);
+        alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime(), 3000, pendingIntent);
     }
 
     private boolean googlePlayEnabled() {
@@ -145,7 +154,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private ActionBarDrawerToggle setupDrawerToggle() {
-        return new ActionBarDrawerToggle(this, dlDrawer, toolbar, R.string.drawer_open,  R.string.drawer_close);
+        return new ActionBarDrawerToggle(this,
+                dlDrawer,
+                toolbar,
+                R.string.drawer_open,
+                R.string.drawer_close);
     }
 
     @Override

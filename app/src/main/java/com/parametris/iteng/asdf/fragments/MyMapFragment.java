@@ -44,13 +44,12 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
     SharedPreferences sharedPreferences;
     Marker marker;
 
-    List<LatLng> routePoints = new ArrayList<LatLng>();
+    List<LatLng> routePoints = new ArrayList<>();
     Polyline route;
 
     // TODO : Save the track history.
     // STILL HAVEN'T SAVED YET!!!
     Realm realm;
-    RealmConfiguration realmConfiguration;
     Utils utils;
 
     @Override
@@ -84,8 +83,7 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
         mapView.getMapAsync(this);
         textViewHereIAm = (TextView) view.findViewById(R.id.text_view_here_i_am);
 
-        realmConfiguration = new RealmConfiguration.Builder(getActivity()).build();
-        realm = Realm.getInstance(realmConfiguration);
+        realm = Realm.getDefaultInstance();
         utils = new Utils();
 
         float lat = sharedPreferences.getFloat("prevLat", 0.0f);
@@ -96,7 +94,7 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
 
         initializeMap();
 
-        if (routePoints == null) {
+        if (routePoints.isEmpty()) {
             routePoints = getAllRoutePoints(realm);
         }
 
@@ -195,7 +193,7 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private List<LatLng> getAllRoutePoints(Realm realm) {
-        RealmResults<LatLangAtTheTime> results = utils.getAllLatLangsAtTheTime(realm);
+        RealmResults<LatLangAtTheTime> results = utils.getAllLatLangAtTheTime(realm);
         List<LatLng> temp = new ArrayList<>();
         for (LatLangAtTheTime result : results) {
             temp.add(result.getLatLng());
