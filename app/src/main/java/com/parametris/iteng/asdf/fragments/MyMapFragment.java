@@ -22,10 +22,16 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.parametris.iteng.asdf.R;
+import com.parametris.iteng.asdf.models.LatLangAtTheTime;
+import com.parametris.iteng.asdf.models.Utils;
 import com.parametris.iteng.asdf.track.LokService;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+import io.realm.RealmResults;
 
 
 public class MyMapFragment extends Fragment implements OnMapReadyCallback {
@@ -42,6 +48,10 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
     Polyline route;
 
     // TODO : Save the track history.
+    // STILL HAVEN'T SAVED YET!!!
+    Realm realm;
+    RealmConfiguration realmConfiguration;
+    Utils utils;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -74,6 +84,10 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
         mapView.getMapAsync(this);
         textViewHereIAm = (TextView) view.findViewById(R.id.text_view_here_i_am);
 
+        realmConfiguration = new RealmConfiguration.Builder(getActivity()).build();
+        realm = Realm.getInstance(realmConfiguration);
+        utils = new Utils();
+
         float lat = sharedPreferences.getFloat("prevLat", 0.0f);
         float lon = sharedPreferences.getFloat("prevLong", 0.0f);
 
@@ -82,6 +96,11 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
 
         initializeMap();
 
+        if (routePoints == null) {
+            routePoints = getAllRoutePoints(realm);
+        }
+
+        // TODO : Refactor this
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(
                 new BroadcastReceiver() {
                     @Override
@@ -102,6 +121,7 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
                         if (route != null) {
                             route.remove();
                         }
+                        addRoutePoint(here);
                         routePoints.add(here);
                         route = googleMap.addPolyline(new PolylineOptions()
                                 .width(10)
@@ -170,6 +190,18 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
         mapView.onLowMemory();
     }
 
+    private void addRoutePoint(LatLng latLng) {
+        utils.addLatLangAtTheTime(realm, latLng);
+    }
+
+    private List<LatLng> getAllRoutePoints(Realm realm) {
+        RealmResults<LatLangAtTheTime> results = utils.getAllLatLangsAtTheTime(realm);
+        List<LatLng> temp = new ArrayList<>();
+        for (LatLangAtTheTime result : results) {
+            temp.add(result.getLatLng());
+        }
+        return temp;
+    }
     /*
     @Override
     public void onLocationChanged(Location location) {
