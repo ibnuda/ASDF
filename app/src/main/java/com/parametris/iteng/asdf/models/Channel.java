@@ -2,15 +2,24 @@ package com.parametris.iteng.asdf.models;
 
 public class Channel extends Conversation {
 
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
+    }
+
     private String topic;
 
     @Override
     public int getType() {
-        return 0;
+        return Conversation.TYPE_CHANNEL;
     }
 
     public Channel(String name) {
         super(name);
         this.topic = "";
     }
+
 }
