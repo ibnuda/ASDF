@@ -54,7 +54,12 @@
 
         <activity
             android:name=".MapsActivity"
-            android:label="@string/title_activity_maps"/>
+            android:label="@string/title_activity_maps" />
+
+        <service
+            android:name=".comm.IRCService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>
