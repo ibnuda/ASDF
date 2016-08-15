@@ -6,9 +6,6 @@ import java.util.UUID
 
 import io.realm.RealmObject
 
-/**
- * Created by DELL on 8/11/2016.
- */
 open class LatLangAtTheTime : RealmObject() {
     open var uuid: String? = null
     open var latitude: Double? = null
