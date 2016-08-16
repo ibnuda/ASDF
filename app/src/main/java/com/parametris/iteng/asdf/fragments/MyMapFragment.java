@@ -119,6 +119,7 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
                         if (route != null) {
                             route.remove();
                         }
+                        /*
                         addRoutePoint(here);
                         routePoints.add(here);
                         route = googleMap.addPolyline(new PolylineOptions()
@@ -126,6 +127,7 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
                                 .color(Color.BLACK)
                                 .geodesic(true));
                         route.setPoints(routePoints);
+                        */
                         textViewHereIAm.setText(here.toString());
                     }
                 }, new IntentFilter(LokService.YUHU)
