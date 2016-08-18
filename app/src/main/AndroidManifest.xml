@@ -59,7 +59,12 @@
         <service
             android:name=".comm.IRCService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
+
+        <!--receiver
+            android:name=".receiver.ReconnectReceiver"
+            android:enabled="true"
+            android:exported="true"></receiver-->
     </application>
 
 </manifest>

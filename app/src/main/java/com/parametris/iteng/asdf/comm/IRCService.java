@@ -7,9 +7,11 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
+import com.parametris.iteng.asdf.models.Broadcast;
 import com.parametris.iteng.asdf.models.Conversation;
 import com.parametris.iteng.asdf.models.Server;
 import com.parametris.iteng.asdf.models.Settings;
+import com.parametris.iteng.asdf.receiver.ReconnectReceiver;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -30,11 +32,11 @@ public class IRCService extends Service {
     private static final int NOTIFICATION_LED_COLOR = 0xff00ff00;
 
     @SuppressWarnings("rawtypes")
-    private static final Class[] mStartForegroundSignature = new Class[] { int.class, Notification.class };
+    private static final Class[] startForegroundSignature = new Class[] { int.class, Notification.class };
     @SuppressWarnings("rawtypes")
-    private static final Class[] mStopForegroundSignature = new Class[] { boolean.class };
+    private static final Class[] stopForegroundSignature = new Class[] { boolean.class };
     @SuppressWarnings("rawtypes")
-    private static final Class[] mSetForegroudSignaure = new Class[] { boolean.class };
+    private static final Class[] setForegroudSignaure = new Class[] { boolean.class };
 
     private final IRCBinder binder;
     private final HashMap<Integer, IRCConnection> connections;
@@ -44,15 +46,15 @@ public class IRCService extends Service {
     private int newMentions = 0;
 
     private NotificationManager notificationManager;
-    private Method mStartForeground;
-    private Method mStopForeground;
-    private final Object[] mStartForegroundArgs = new Object[2];
+    private Method startForeground;
+    private Method stopForeground;
+    private final Object[] startForegroundArgs = new Object[2];
     private final Object[] mStopForegroundArgs = new Object[1];
     private Notification notification;
     private Settings settings;
 
     private HashMap<Integer, PendingIntent> alarmIntents;
-    // private HashMap<Integer, ReconnectReceiver> alarmReceivers;
+    private HashMap<Integer, ReconnectReceiver> alarmReceivers;
     private final Object alarmIntentsLock;
 
     public IRCService() {
@@ -62,15 +64,33 @@ public class IRCService extends Service {
         this.connectedServerTitles = new ArrayList<>();
         this.mentions = new LinkedHashMap<>();
         this.alarmIntents = new LinkedHashMap<>();
-        // this.alarmReceivers = new HashMap<>();
+        this.alarmReceivers = new HashMap<>();
         this.alarmIntentsLock = new Object();
     }
 
     @Override
-    public IBinder onBind(Intent intent) {
-        throw new UnsupportedOperationException("Not yet implemented");
+    public IRCBinder onBind(Intent intent) {
+        return binder;
     }
 
-    public void connect(Server server) {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        settings = new Settings(getBaseContext());
+        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        try {
+            startForeground = getClass().getMethod("startForeground", startForegroundSignature);
+            stopForeground = getClass().getMethod("stopForeground", stopForegroundSignature);
+        } catch (Exception e) {
+            startForeground = null;
+            stopForeground = null;
+        }
+
+        sendBroadcast(new Intent(Broadcast.SERVER_UPDATE));
+    }
+
+    public void connect(final Server server) {
+
     }
 }
