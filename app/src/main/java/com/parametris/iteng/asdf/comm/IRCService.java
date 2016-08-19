@@ -5,19 +5,21 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 
+import com.parametris.iteng.asdf.R;
+import com.parametris.iteng.asdf.activities.MainActivity;
 import com.parametris.iteng.asdf.models.Broadcast;
 import com.parametris.iteng.asdf.models.Conversation;
 import com.parametris.iteng.asdf.models.Server;
 import com.parametris.iteng.asdf.models.Settings;
 import com.parametris.iteng.asdf.receiver.ReconnectReceiver;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Objects;
 
 public class IRCService extends Service {
     public static final String ACTION_FOREGROUND = "service.foreground";
@@ -36,7 +38,7 @@ public class IRCService extends Service {
     @SuppressWarnings("rawtypes")
     private static final Class[] stopForegroundSignature = new Class[] { boolean.class };
     @SuppressWarnings("rawtypes")
-    private static final Class[] setForegroudSignaure = new Class[] { boolean.class };
+    private static final Class[] setForegroundSignature = new Class[] { boolean.class };
 
     private final IRCBinder binder;
     private final HashMap<Integer, IRCConnection> connections;
@@ -49,7 +51,7 @@ public class IRCService extends Service {
     private Method startForeground;
     private Method stopForeground;
     private final Object[] startForegroundArgs = new Object[2];
-    private final Object[] mStopForegroundArgs = new Object[1];
+    private final Object[] stopForegroundArgs = new Object[1];
     private Notification notification;
     private Settings settings;
 
@@ -88,6 +90,123 @@ public class IRCService extends Service {
         }
 
         sendBroadcast(new Intent(Broadcast.SERVER_UPDATE));
+    }
+
+    public Settings getSettings() {
+        return settings;
+    }
+
+    @Override
+    public void onStart(Intent intent, int startId) {
+        super.onStart(intent,startId);
+        handleCommand(intent);
+    }
+
+    private void handleCommand(Intent intent) {
+        if (ACTION_FOREGROUND.equals(intent.getAction())) {
+            if (foreground) {
+                return;
+            }
+            foreground = true;
+
+            notification = new Notification(R.drawable.ic_media_play, getText(R.string.accept), System.currentTimeMillis());
+
+            Intent notifyIntent = new Intent(this, MainActivity.class);
+            notifyIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notifyIntent, 0);
+
+            notification = new NotificationCompat.Builder(this)
+                    .setSmallIcon(R.drawable.ic_media_play)
+                    .setContentTitle(getText(R.string.app_name))
+                    .setContentText(getText(R.string.cast_notification_connected_message))
+                    .setWhen(System.currentTimeMillis())
+                    .setContentIntent(contentIntent)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+                    .build();
+            startForegroundCompat(FOREGROUND_NOTIFICATION, notification);
+        } else if (ACTION_BACKGROUND.equals(intent.getAction()) && !foreground) {
+            stopForegroundCompat(FOREGROUND_NOTIFICATION);
+        } else if (ACTION_ACK_NEW_MENTIONS.equals(intent.getAction())) {
+            ackNewMentions(intent.getIntExtra(EXTRA_ACK_SERVERID, -1), intent.getStringExtra(EXTRA_ACK_SERVERID));
+        }
+    }
+
+    private void ackNewMentions(int intExtra, String stringExtra) {
+        if (null == stringExtra) {
+            return;
+        }
+
+        Conversation conversation = mentions.remove(getConversationId(intExtra, stringExtra));
+        if (null == conversation) {
+            return;
+        }
+        newMentions -= conversation.getNewMentions();
+        conversation.clearNewMentions();
+        if (0 > newMentions) {
+            newMentions = 0;
+        }
+
+        updateNotification(null, null, false, false, false);
+    }
+
+    private void updateNotification(String text, String contentText, boolean vibrate, boolean sound, boolean light) {
+        if (foreground) {
+            Intent intentNotify = new Intent(this, MainActivity.class);
+        }
+    }
+
+    private String getConversationId(int intExtra, String stringExtra) {
+        return intExtra + ":" + stringExtra;
+    }
+
+    private void stopForegroundCompat(int foregroundNotification) {
+        foreground = false;
+        if (null != stopForeground) {
+            stopForegroundArgs[0] = Boolean.TRUE;
+            try {
+                stopForeground.invoke(this, stopForegroundArgs);
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        } else {
+            notificationManager.cancel(foregroundNotification);
+
+            try {
+                Method setForeground = getClass().getMethod("setForeground", setForegroundSignature);
+                setForeground.invoke(this, new Object[] {true});
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void startForegroundCompat(int foregroundNotification, Notification notification) {
+        if (null != startForeground) {
+            startForegroundArgs[0] = Integer.valueOf(foregroundNotification);
+            startForegroundArgs[1] = notification;
+            try {
+                startForeground.invoke(this, startForegroundArgs);
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                Method setForeground = getClass().getMethod("setForeground", setForegroundSignature);
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+
+            notificationManager.notify(foregroundNotification, notification);
+        }
     }
 
     public void connect(final Server server) {
