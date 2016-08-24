@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item_container"
+    android:orientation="horizontal"
+    android:focusable="true"
+    android:nextFocusLeft="@+id/button_cancel"
+    android:nextFocusRight="@id/checkbox"
+    android:layout_width="match_parent"
+    android:layout_height="?android:listPreferredItemHeight">
+
+    <ImageView
+        android:id="@+id/item_icon"
+        android:adjustViewBounds="true"
+        android:scaleType="centerCrop"
+        android:visibility="visible"
+        android:layout_width="?android:listPreferredItemHeight"
+        android:layout_height="?android:listPreferredItemHeight"
+        android:contentDescription="@string/wut" />
+    <TextView
+        android:id="@+id/text_filename"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent" />
+
+    <CheckBox
+        android:id="@+id/checkbox"
+        android:nextFocusRight="@+id/button_ok"
+        android:nextFocusLeft="@id/item_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent" />
+</LinearLayout>

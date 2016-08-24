@@ -127,8 +127,10 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.nav_communicator_send_file:
                 // fragmentClass = SendFileFragment.class;
-                fragmentClass = PickFileFragment.class;
-                break;
+                startActivity(new Intent(this, WusDat.class));
+                return;
+                // fragmentClass = PickFileFragment.class;
+                // break;
             /*
             case R.id.nav_condition:
                 fragmentClass = HealthFragment.class;

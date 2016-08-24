@@ -42,4 +42,6 @@
         <item>20</item>
         <item>0</item>
     </string-array>
+    <string name="title_activity_wus_dat">WusDat</string>
+    <string name="wut">wut</string>
 </resources>

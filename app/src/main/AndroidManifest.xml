@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.READ_PROFILE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name=".ASDFApplication"
@@ -62,10 +62,16 @@
             android:enabled="true"
             android:exported="true" />
 
-        <!--receiver
+        <!--
+            receiver
             android:name=".receiver.ReconnectReceiver"
             android:enabled="true"
-            android:exported="true"></receiver-->
+            android:exported="true"></receiver
+        -->
+        <activity
+            android:name=".activities.WusDat"
+            android:label="@string/title_activity_wus_dat"
+            android:theme="@style/AppTheme"></activity>
     </application>
 
 </manifest>
