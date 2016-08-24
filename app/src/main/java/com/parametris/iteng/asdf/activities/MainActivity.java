@@ -24,7 +24,6 @@ import com.parametris.iteng.asdf.fragments.AmmunitionFragment;
 import com.parametris.iteng.asdf.fragments.ChatFragment;
 import com.parametris.iteng.asdf.fragments.HealthFragment;
 import com.parametris.iteng.asdf.fragments.MyMapFragment;
-import com.parametris.iteng.asdf.fragments.PickFileFragment;
 import com.parametris.iteng.asdf.models.Utils;
 import com.parametris.iteng.asdf.track.LokAlarmReceiver;
 
@@ -127,7 +126,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.nav_communicator_send_file:
                 // fragmentClass = SendFileFragment.class;
-                startActivity(new Intent(this, WusDat.class));
+                startActivityForResult((new Intent(getApplicationContext(), WusDatActivity.class)), 1);
+                // startActivity(new Intent(getApplicationContext(), WusDatActivity.class));
                 return;
                 // fragmentClass = PickFileFragment.class;
                 // break;

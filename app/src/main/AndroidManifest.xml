@@ -69,7 +69,7 @@
             android:exported="true"></receiver
         -->
         <activity
-            android:name=".activities.WusDat"
+            android:name=".activities.WusDatActivity"
             android:label="@string/title_activity_wus_dat"
             android:theme="@style/AppTheme"></activity>
     </application>
