@@ -18,8 +18,11 @@
         android:layout_height="?android:listPreferredItemHeight"
         android:contentDescription="@string/wut" />
     <TextView
-        android:id="@+id/text_filename"
+        android:id="@android:id/text1"
+        android:text="@string/name_of_file"
         android:layout_width="0dp"
+        android:ellipsize="end"
+        android:singleLine="true"
         android:layout_weight="1"
         android:layout_height="match_parent" />
 </LinearLayout>

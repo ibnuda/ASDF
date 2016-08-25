@@ -1,7 +1,9 @@
 package com.parametris.iteng.asdf.activities;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,10 +17,12 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.StringBuilderPrinter;
 import android.view.MenuItem;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.nononsenseapps.filepicker.FilePickerActivity;
 import com.parametris.iteng.asdf.R;
 import com.parametris.iteng.asdf.fragments.AmmunitionFragment;
 import com.parametris.iteng.asdf.fragments.ChatFragment;
@@ -183,6 +187,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         return drawerToggle.onOptionsItemSelected(item) || super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // TODO : KIRIM KE SERVER
+        if (0 == requestCode && resultCode == Activity.RESULT_OK) {
+            toolbar.setTitle(data.getData().toString());
+        } else {
+            toolbar.setTitle("kosong");
+        }
     }
 
 }
