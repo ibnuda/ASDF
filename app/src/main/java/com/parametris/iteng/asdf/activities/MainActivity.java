@@ -3,7 +3,6 @@ package com.parametris.iteng.asdf.activities;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,12 +16,10 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.StringBuilderPrinter;
 import android.view.MenuItem;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.nononsenseapps.filepicker.FilePickerActivity;
 import com.parametris.iteng.asdf.R;
 import com.parametris.iteng.asdf.fragments.AmmunitionFragment;
 import com.parametris.iteng.asdf.fragments.ChatFragment;
@@ -30,6 +27,8 @@ import com.parametris.iteng.asdf.fragments.HealthFragment;
 import com.parametris.iteng.asdf.fragments.MyMapFragment;
 import com.parametris.iteng.asdf.models.Utils;
 import com.parametris.iteng.asdf.track.LokAlarmReceiver;
+
+import net.gotev.uploadservice.UploadNotificationConfig;
 
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
@@ -191,12 +190,29 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // TODO : KIRIM KE SERVER
         if (0 == requestCode && resultCode == Activity.RESULT_OK) {
             toolbar.setTitle(data.getData().toString());
+            uploadTheFile(data.getData().toString());
         } else {
             toolbar.setTitle("kosong");
         }
+    }
+
+    private UploadNotificationConfig getNotificationConfig(String name) {
+        return new UploadNotificationConfig()
+                .setIcon(R.drawable.ic_pause_dark)
+                .setCompletedIcon(R.drawable.ic_play_dark)
+                .setErrorIcon(R.drawable.quantum_ic_stop_grey600_36)
+                .setTitle(name)
+                .setInProgressMessage("Uploading")
+                .setCompletedMessage("Uploaded")
+                .setErrorMessage("Ada masalah, um.")
+                .setClickIntent(new Intent(this, MainActivity.class))
+                .setRingToneEnabled(true);
+    }
+
+    private void uploadTheFile(String filename) {
+        // TODO: WRITE THE CODE.
     }
 
 }
