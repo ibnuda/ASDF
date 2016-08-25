@@ -1,19 +1,22 @@
 package com.parametris.iteng.asdf.activities;
 
-import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 
 import com.nononsenseapps.filepicker.AbstractFilePickerActivity;
 import com.nononsenseapps.filepicker.AbstractFilePickerFragment;
-import com.parametris.iteng.asdf.R;
 import com.parametris.iteng.asdf.fragments.PickFileFragment;
 
 import java.io.File;
 
 public class WusDatActivity extends AbstractFilePickerActivity {
+
+    public WusDatActivity() {
+        super();
+    }
+
     @Override
-    protected AbstractFilePickerFragment getFragment(
+    protected AbstractFilePickerFragment<File> getFragment(
             @Nullable String startPath,
             int mode,
             boolean allowMultiple,
@@ -27,7 +30,7 @@ public class WusDatActivity extends AbstractFilePickerActivity {
         return fragment;
     }
 
-    /*
+        /*
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,6 +47,6 @@ public class WusDatActivity extends AbstractFilePickerActivity {
             }
         });
     }
-    */
+        */
 
 }

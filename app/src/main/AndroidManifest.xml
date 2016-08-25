@@ -71,7 +71,12 @@
         <activity
             android:name=".activities.WusDatActivity"
             android:label="@string/title_activity_wus_dat"
-            android:theme="@style/AppTheme"></activity>
+            android:theme="@style/FilePickerTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.GET_CONTENT"></action>
+                <category android:name="android.intent.category.DEFAULT"></category>
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

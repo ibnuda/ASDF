@@ -125,8 +125,10 @@ public class MainActivity extends AppCompatActivity {
                 fragmentClass = ChatFragment.class;
                 break;
             case R.id.nav_communicator_send_file:
+                Intent pickFileIntent = new Intent(MainActivity.this, WusDatActivity.class);
+                startActivityForResult(pickFileIntent, 0);
                 // fragmentClass = SendFileFragment.class;
-                startActivityForResult((new Intent(getApplicationContext(), WusDatActivity.class)), 1);
+                // startActivityForResult((new Intent(MainActivity.this, WusDatActivity.class)), 1);
                 // startActivity(new Intent(getApplicationContext(), WusDatActivity.class));
                 return;
                 // fragmentClass = PickFileFragment.class;
