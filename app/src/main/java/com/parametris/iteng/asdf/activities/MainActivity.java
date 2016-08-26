@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.SystemClock;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -41,6 +42,7 @@ import net.gotev.uploadservice.UploadNotificationConfig;
 import net.gotev.uploadservice.UploadService;
 import net.gotev.uploadservice.UploadStatusDelegate;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
@@ -215,8 +217,12 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (0 == requestCode && resultCode == Activity.RESULT_OK) {
             Log.d(TAG, "onActivityResult: " + data.toString());
-            toolbar.setTitle(data.getData().toString());
-            uploadTheFile(data.getData().toString());
+            Uri lokasi = data.getData();
+            File anuLah = new File(lokasi.getPath());
+            // toolbar.setTitle(data.getData().toString());
+            // uploadTheFile(data.getData().toString());
+            toolbar.setTitle(anuLah.toString());
+            uploadTheFile(anuLah.toString());
         } else {
             toolbar.setTitle("kosong");
         }
@@ -236,18 +242,16 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
     }
 
     private void uploadTheFile(String filename) {
-        final String server = "http://pancanaka.net/";
+        final String server = "http://192.168.1.104/~ibnu/haro.php";
         try {
             final String nameOfFile = getNameOfFile(filename);
             MultipartUploadRequest request = new MultipartUploadRequest(this, server)
-                    .addFileToUpload(filename, "")
+                    .addFileToUpload(filename, nameOfFile)
                     .setNotificationConfig(getNotificationConfig(nameOfFile))
                     .setMaxRetries(4);
             String uploadID = request.setDelegate(this).startUpload();
             addUploadToList(uploadID, nameOfFile);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
+        } catch (FileNotFoundException | MalformedURLException e) {
             e.printStackTrace();
         }
     }
@@ -270,22 +274,38 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
 
     @Override
     public void onProgress(UploadInfo uploadInfo) {
-
+        if (null == uploadProgressViewHolderMap.get(uploadInfo.getUploadId())) {
+            return;
+        }
+        uploadProgressViewHolderMap
+                .get(uploadInfo.getUploadId())
+                .progressBar.setProgress(uploadInfo.getProgressPercent());
     }
 
     @Override
     public void onError(UploadInfo uploadInfo, Exception exception) {
+        if (null == uploadProgressViewHolderMap.get(uploadInfo.getUploadId())) {
+            return;
+        }
 
+        linearLayout.removeView(uploadProgressViewHolderMap.get(uploadInfo.getUploadId()).itemView);
+        uploadProgressViewHolderMap.remove(uploadInfo.getUploadId());
     }
 
     @Override
     public void onCompleted(UploadInfo uploadInfo, ServerResponse serverResponse) {
-
+        linearLayout.removeView(uploadProgressViewHolderMap.get(uploadInfo.getUploadId()).itemView);
+        uploadProgressViewHolderMap.remove(uploadInfo.getUploadId());
     }
 
     @Override
     public void onCancelled(UploadInfo uploadInfo) {
+        if (null == uploadProgressViewHolderMap.get(uploadInfo.getUploadId())) {
+            return;
+        }
 
+        linearLayout.removeView(uploadProgressViewHolderMap.get(uploadInfo.getUploadId()).itemView);
+        uploadProgressViewHolderMap.remove(uploadInfo.getUploadId());
     }
 
     class UploadProgressViewHolder {
