@@ -45,4 +45,6 @@
     <string name="title_activity_wus_dat">WusDat</string>
     <string name="wut">wut</string>
     <string name="name_of_file">Name</string>
+    <string name="upload_progress">Upload progress: %s</string>
+    <string name="cancel_upload">Cancel upload</string>
 </resources>

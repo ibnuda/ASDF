@@ -53,10 +53,10 @@ public class PickFileFragment extends FilePickerFragment {
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         switch (viewType) {
-            case VIEW_NONCH:
+            case VIEW_CHECK:
                 return new CheckableViewHolder(LayoutInflater.from(getActivity())
                         .inflate(R.layout.list_item_banyak, parent, false));
-            case VIEW_CHECK:
+            case VIEW_NONCH:
                 return new DirViewHolder(LayoutInflater.from(getActivity())
                         .inflate(R.layout.list_item, parent, false));
             default:

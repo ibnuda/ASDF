@@ -16,7 +16,13 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -28,16 +34,29 @@ import com.parametris.iteng.asdf.fragments.MyMapFragment;
 import com.parametris.iteng.asdf.models.Utils;
 import com.parametris.iteng.asdf.track.LokAlarmReceiver;
 
+import net.gotev.uploadservice.MultipartUploadRequest;
+import net.gotev.uploadservice.ServerResponse;
+import net.gotev.uploadservice.UploadInfo;
 import net.gotev.uploadservice.UploadNotificationConfig;
+import net.gotev.uploadservice.UploadService;
+import net.gotev.uploadservice.UploadStatusDelegate;
+
+import java.io.FileNotFoundException;
+import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
 
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements UploadStatusDelegate {
+    public static final String TAG = "MainActivity";
     Toolbar toolbar;
     NavigationView nvDrawer;
     DrawerLayout dlDrawer;
     ActionBarDrawerToggle drawerToggle;
+    LinearLayout linearLayout;
 
     boolean trackingNow;
     AlarmManager alarmManager;
@@ -48,10 +67,14 @@ public class MainActivity extends AppCompatActivity {
     RealmConfiguration realmConfiguration;
     Utils utils;
 
+    Map<String, UploadProgressViewHolder> uploadProgressViewHolderMap = new HashMap<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        linearLayout = (LinearLayout) findViewById(R.id.container);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -191,6 +214,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (0 == requestCode && resultCode == Activity.RESULT_OK) {
+            Log.d(TAG, "onActivityResult: " + data.toString());
             toolbar.setTitle(data.getData().toString());
             uploadTheFile(data.getData().toString());
         } else {
@@ -212,7 +236,82 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void uploadTheFile(String filename) {
-        // TODO: WRITE THE CODE.
+        final String server = "http://pancanaka.net/";
+        try {
+            final String nameOfFile = getNameOfFile(filename);
+            MultipartUploadRequest request = new MultipartUploadRequest(this, server)
+                    .addFileToUpload(filename, "")
+                    .setNotificationConfig(getNotificationConfig(nameOfFile))
+                    .setMaxRetries(4);
+            String uploadID = request.setDelegate(this).startUpload();
+            addUploadToList(uploadID, nameOfFile);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
     }
 
+    private void addUploadToList(String uploadID, String nameOfFile) {
+        View uploadProgress = getLayoutInflater().inflate(R.layout.upload_progress, null);
+        UploadProgressViewHolder uploadProgressViewHolder = new UploadProgressViewHolder(uploadProgress, nameOfFile);
+        uploadProgressViewHolder.uploadId = uploadID;
+        linearLayout.addView(uploadProgressViewHolder.itemView, 0);
+        uploadProgressViewHolderMap.put(uploadID, uploadProgressViewHolder);
+    }
+
+    private String getNameOfFile(String filename) {
+        if (null == filename) {
+            return null;
+        }
+        final String [] parts = filename.split("/");
+        return parts[parts.length - 1];
+    }
+
+    @Override
+    public void onProgress(UploadInfo uploadInfo) {
+
+    }
+
+    @Override
+    public void onError(UploadInfo uploadInfo, Exception exception) {
+
+    }
+
+    @Override
+    public void onCompleted(UploadInfo uploadInfo, ServerResponse serverResponse) {
+
+    }
+
+    @Override
+    public void onCancelled(UploadInfo uploadInfo) {
+
+    }
+
+    class UploadProgressViewHolder {
+        View itemView;
+        TextView textView;
+        ProgressBar progressBar;
+        Button button;
+        String uploadId;
+        UploadProgressViewHolder(View view, String filename) {
+            itemView = view;
+            textView = (TextView) itemView.findViewById(R.id.upload_title);
+            progressBar = (ProgressBar) itemView.findViewById(R.id.upload_progress_bar);
+            textView.setText(getString(R.string.upload_progress, filename));
+            button = (Button) itemView.findViewById(R.id.cancel_upload_button);
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (null == uploadId) {
+                        return;
+                    }
+
+                    UploadService.stopUpload(uploadId);
+                }
+            });
+        }
+
+
+    }
 }
