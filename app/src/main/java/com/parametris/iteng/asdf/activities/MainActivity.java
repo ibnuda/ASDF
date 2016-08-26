@@ -242,6 +242,7 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
     }
 
     private void uploadTheFile(String filename) {
+        // TODO: 8/26/2016 tambah server untuk upload
         final String server = "http://192.168.1.104/~ibnu/haro.php";
         try {
             final String nameOfFile = getNameOfFile(filename);
