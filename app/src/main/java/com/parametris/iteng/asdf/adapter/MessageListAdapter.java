@@ -1,13 +1,12 @@
 package com.parametris.iteng.asdf.adapter;
 
 import android.content.Context;
-import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-import com.parametris.iteng.asdf.models.Conversation;
-import com.parametris.iteng.asdf.models.Message;
+import com.parametris.iteng.asdf.model.Conversation;
+import com.parametris.iteng.asdf.model.Message;
 
 import java.util.LinkedList;
 

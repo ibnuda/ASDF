@@ -5,8 +5,7 @@ import android.view.View;
 import android.widget.AdapterView;
 
 import com.parametris.iteng.asdf.adapter.MessageListAdapter;
-import com.parametris.iteng.asdf.fragments.ChatFragment;
-import com.parametris.iteng.asdf.models.Extra;
+import com.parametris.iteng.asdf.fragment.ChatFragment;
 
 public class MessageClickListener implements AdapterView.OnItemClickListener {
     private static MessageClickListener instance;

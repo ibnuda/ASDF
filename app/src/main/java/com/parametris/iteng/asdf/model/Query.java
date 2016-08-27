@@ -1,4 +1,4 @@
-package com.parametris.iteng.asdf.models;
+package com.parametris.iteng.asdf.model;
 
 public class Query extends Conversation {
     public Query(String name) {

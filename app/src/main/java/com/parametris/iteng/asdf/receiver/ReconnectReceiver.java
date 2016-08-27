@@ -5,8 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.parametris.iteng.asdf.comm.IRCService;
-import com.parametris.iteng.asdf.models.Broadcast;
-import com.parametris.iteng.asdf.models.Server;
+import com.parametris.iteng.asdf.model.Broadcast;
+import com.parametris.iteng.asdf.model.Server;
 
 public class ReconnectReceiver extends BroadcastReceiver {
     private IRCService service;

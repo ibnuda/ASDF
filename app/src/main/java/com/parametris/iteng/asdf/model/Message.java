@@ -1,7 +1,6 @@
-package com.parametris.iteng.asdf.models;
+package com.parametris.iteng.asdf.model;
 
 import android.content.Context;
-import android.system.StructPollfd;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;

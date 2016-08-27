@@ -1,4 +1,4 @@
-package com.parametris.iteng.asdf.models;
+package com.parametris.iteng.asdf.model;
 
 public class Extra {
     public static final String SERVER = "server";

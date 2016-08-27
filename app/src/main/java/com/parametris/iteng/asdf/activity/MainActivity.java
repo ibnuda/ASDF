@@ -1,4 +1,4 @@
-package com.parametris.iteng.asdf.activities;
+package com.parametris.iteng.asdf.activity;
 
 import android.app.Activity;
 import android.app.AlarmManager;
@@ -28,11 +28,11 @@ import android.widget.TextView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.parametris.iteng.asdf.R;
-import com.parametris.iteng.asdf.fragments.AmmunitionFragment;
-import com.parametris.iteng.asdf.fragments.ChatFragment;
-import com.parametris.iteng.asdf.fragments.HealthFragment;
-import com.parametris.iteng.asdf.fragments.MyMapFragment;
-import com.parametris.iteng.asdf.models.Utils;
+import com.parametris.iteng.asdf.fragment.AmmunitionFragment;
+import com.parametris.iteng.asdf.fragment.ChatFragment;
+import com.parametris.iteng.asdf.fragment.HealthFragment;
+import com.parametris.iteng.asdf.fragment.MyMapFragment;
+import com.parametris.iteng.asdf.model.Utils;
 import com.parametris.iteng.asdf.track.LokAlarmReceiver;
 
 import net.gotev.uploadservice.MultipartUploadRequest;
@@ -46,7 +46,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 
 import io.realm.Realm;

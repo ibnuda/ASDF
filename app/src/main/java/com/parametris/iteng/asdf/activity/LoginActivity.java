@@ -1,4 +1,4 @@
-package com.parametris.iteng.asdf.activities;
+package com.parametris.iteng.asdf.activity;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;

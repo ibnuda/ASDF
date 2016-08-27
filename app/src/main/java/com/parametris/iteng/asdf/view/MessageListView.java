@@ -4,7 +4,6 @@ import android.content.Context;
 import android.widget.ListView;
 import com.parametris.iteng.asdf.adapter.MessageListAdapter;
 import com.parametris.iteng.asdf.listener.MessageClickListener;
-import com.parametris.iteng.asdf.models.Message;
 
 /**
  * Created on 26/08/2016.

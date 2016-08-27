@@ -1,4 +1,4 @@
-package com.parametris.iteng.asdf.fragments;
+package com.parametris.iteng.asdf.fragment;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;

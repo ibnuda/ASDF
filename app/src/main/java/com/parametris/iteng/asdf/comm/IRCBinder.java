@@ -2,7 +2,7 @@ package com.parametris.iteng.asdf.comm;
 
 import android.os.Binder;
 
-import com.parametris.iteng.asdf.models.Server;
+import com.parametris.iteng.asdf.model.Server;
 
 public class IRCBinder extends Binder {
     private final IRCService ircService;

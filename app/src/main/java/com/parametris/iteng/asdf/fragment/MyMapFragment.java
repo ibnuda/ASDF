@@ -1,4 +1,4 @@
-package com.parametris.iteng.asdf.fragments;
+package com.parametris.iteng.asdf.fragment;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -22,15 +22,14 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.parametris.iteng.asdf.R;
-import com.parametris.iteng.asdf.models.LatLangAtTheTime;
-import com.parametris.iteng.asdf.models.Utils;
+import com.parametris.iteng.asdf.model.LatLangAtTheTime;
+import com.parametris.iteng.asdf.model.Utils;
 import com.parametris.iteng.asdf.track.LokService;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
-import io.realm.RealmConfiguration;
 import io.realm.RealmResults;
 
 

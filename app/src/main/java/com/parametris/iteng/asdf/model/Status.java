@@ -1,4 +1,4 @@
-package com.parametris.iteng.asdf.models;
+package com.parametris.iteng.asdf.model;
 
 /**
  * Created by DELL on 8/15/2016.

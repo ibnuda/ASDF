@@ -5,8 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.parametris.iteng.asdf.listener.ConversationListener;
-import com.parametris.iteng.asdf.models.Broadcast;
-import com.parametris.iteng.asdf.models.Extra;
+import com.parametris.iteng.asdf.model.Broadcast;
+import com.parametris.iteng.asdf.model.Extra;
 
 public class ConversationReceiver extends BroadcastReceiver {
     private final ConversationListener conversationListener;

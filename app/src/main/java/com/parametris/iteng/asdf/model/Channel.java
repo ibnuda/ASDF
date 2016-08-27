@@ -1,4 +1,4 @@
-package com.parametris.iteng.asdf.models;
+package com.parametris.iteng.asdf.model;
 
 public class Channel extends Conversation {
 

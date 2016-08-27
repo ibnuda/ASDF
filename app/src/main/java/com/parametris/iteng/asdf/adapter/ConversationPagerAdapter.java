@@ -1,13 +1,12 @@
 package com.parametris.iteng.asdf.adapter;
 
 import android.content.Context;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.View;
 import com.parametris.iteng.asdf.listener.MessageClickListener;
-import com.parametris.iteng.asdf.models.Conversation;
-import com.parametris.iteng.asdf.models.Server;
+import com.parametris.iteng.asdf.model.Conversation;
+import com.parametris.iteng.asdf.model.Server;
 import com.parametris.iteng.asdf.view.MessageListView;
 
 import java.util.HashMap;

@@ -8,11 +8,11 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 
 import com.parametris.iteng.asdf.R;
-import com.parametris.iteng.asdf.activities.MainActivity;
-import com.parametris.iteng.asdf.models.Broadcast;
-import com.parametris.iteng.asdf.models.Conversation;
-import com.parametris.iteng.asdf.models.Server;
-import com.parametris.iteng.asdf.models.Settings;
+import com.parametris.iteng.asdf.activity.MainActivity;
+import com.parametris.iteng.asdf.model.Broadcast;
+import com.parametris.iteng.asdf.model.Conversation;
+import com.parametris.iteng.asdf.model.Server;
+import com.parametris.iteng.asdf.model.Settings;
 import com.parametris.iteng.asdf.receiver.ReconnectReceiver;
 
 import java.lang.reflect.InvocationTargetException;
@@ -177,9 +177,7 @@ public class IRCService extends Service {
             try {
                 Method setForeground = getClass().getMethod("setForeground", setForegroundSignature);
                 setForeground.invoke(this, new Object[] {true});
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+            } catch (NoSuchMethodException | IllegalAccessException e) {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
                 e.printStackTrace();

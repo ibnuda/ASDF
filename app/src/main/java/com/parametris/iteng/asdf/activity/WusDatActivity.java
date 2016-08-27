@@ -1,11 +1,11 @@
-package com.parametris.iteng.asdf.activities;
+package com.parametris.iteng.asdf.activity;
 
 import android.os.Environment;
 import android.support.annotation.Nullable;
 
 import com.nononsenseapps.filepicker.AbstractFilePickerActivity;
 import com.nononsenseapps.filepicker.AbstractFilePickerFragment;
-import com.parametris.iteng.asdf.fragments.PickFileFragment;
+import com.parametris.iteng.asdf.fragment.PickFileFragment;
 
 import java.io.File;
 
