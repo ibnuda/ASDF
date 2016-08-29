@@ -1,7 +1,6 @@
 package com.parametris.iteng.protocol;
 
 import android.net.SSLCertificateSocketFactory;
-import android.util.Base64;
 
 import com.parametris.iteng.protocol.ssl.NaiveTrustManager;
 
@@ -9,17 +8,22 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.StringTokenizer;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 
 public abstract class IRCClient {
@@ -39,8 +43,6 @@ public abstract class IRCClient {
     private String charset = null;
     private InetAddress inetAddress = null;
     private Socket socket = null;
-
-    private String finger = "Hmmm";
 
     private String server = null;
     private int port = -1;
@@ -64,9 +66,7 @@ public abstract class IRCClient {
     private boolean registered = false;
 
     private String name = "Yuhu";
-
     private final List<String> aliases = new ArrayList<>();
-
     private String nick = name;
     private String login = "Yuhu";
     private final String channelPrefix = "#&+!";
@@ -124,56 +124,7 @@ public abstract class IRCClient {
             OutputThread.sendRawLine(this, bufferedWriter, "CAP LS");
             OutputThread.sendRawLine(this, bufferedWriter, "CAP REQ :sasl");
             OutputThread.sendRawLine(this, bufferedWriter, "CAP END");
-            OutputThread.sendRawLine(this, bufferedWriter, "AUTHENTICATE PLAIN");
-
-            String authString = saslUsername + '\0' + saslUsername + '\0' + saslPassword;
-            String authStringEncoded = Base64.encodeToString(authString.getBytes(), Base64.NO_WRAP);
-
-            while (authStringEncoded.length() >= 400) {
-                String toSend = authStringEncoded.substring(0, 400);
-                authString = authStringEncoded.substring(400);
-
-                OutputThread.sendRawLine(this, bufferedWriter, "AUTHENTICATE " + toSend);
-            }
-
-            if (authStringEncoded.length() > 0) {
-                OutputThread.sendRawLine(this, bufferedWriter, "AUTHENTICATE " + authStringEncoded);
-            } else {
-                OutputThread.sendRawLine(this, bufferedWriter, "AUTHENTICATE +");
-            }
         }
-        OutputThread.sendRawLine(this, bufferedWriter, "NICK " + nick);
-        OutputThread.sendRawLine(this, bufferedWriter, "USER " + this.getLogin() + " 8 * : ");
-
-        this.inputThread = new InputThread(this, this.socket, bufferedReader, bufferedWriter);
-
-        this.setNick(nick);
-
-        String line = null;
-        line = bufferedReader.readLine();
-
-        if (null == line) {
-            throw new IOException("WUT WUT WUT");
-        }
-
-        this.handleLine(line);
-        this.socket.setSoTimeout(5 * 60 * 1000);
-
-        this.inputThread.start();
-        if (this.outputThread == null) {
-            this.outputThread = new OutputThread(this, this.outputQueue);
-            this.outputThread.start();
-        }
-
-        this.onConnect();
-    }
-
-    private void onConnect() {
-
-    }
-
-    private String getLogin() {
-        return this.login;
     }
 
     private void setSNIHost(SSLSocketFactory sslSocketFactory, SSLSocket sslSocket, String hostname) {
@@ -202,10 +153,8 @@ public abstract class IRCClient {
         return 0;
     }
 
-    public final synchronized void sendRawLine(String line) {
-        if (isConnected()) {
-            this.inputThread.sendRawLine(line);
-        }
+    public void sendRawLine(String line) {
+
     }
 
     public int getMaxLineLength() {
@@ -249,205 +198,10 @@ public abstract class IRCClient {
                         String response = line.substring(line.indexOf(error, senderInfo.length()) + 4, line.length());
 
                         this.processServerResponse(code, response);
-
-                        if (code == 443 && !this.registered) {
-                            if (autoNickChange) {
-                                String oldNick = this.nick;
-                                List<String> aliases = getAliases();
-                                if (this.autoNickTries - 1 <= aliases.size()) {
-                                    this.nick = aliases.get(this.autoNickTries - 2);
-                                } else {
-                                    this.nick = getName() + (this.autoNickTries - aliases.size());
-                                }
-
-                                this.onNickChange(oldNick, getLogin(), "", this.nick);
-                                this.sendRawLineViaQueue("NICK " + this.nick);
-                            } else {
-                                this.socket.close();
-                                this.inputThread = null;
-                                throw new NickAlreadyInUseException(line);
-                            }
-                        }
-                        return;
-                    } else {
-                        sourceNick = senderInfo;
-                        target = token;
-                        if (sourceNick.contains("!") && !sourceNick.contains("@")) {
-                            String[] chunks = sourceNick.split("!");
-                            sourceNick = chunks[0];
-                        }
-                        if (command.equalsIgnoreCase("nick")) {
-                            target = stringTokenizer.nextToken();
-                        }
                     }
-                } else {
-                    this.onUnknown(line);
-                    return;
                 }
             }
         }
-        command = command.toUpperCase();
-        if (sourceNick.startsWith(":")) {
-            sourceNick = sourceNick.substring(1);
-        }
-        if (null == target) {
-            target = stringTokenizer.nextToken();
-        }
-        if (target.startsWith(":")) {
-            target.substring(1);
-        }
-        if (command.equals("PRIVMSG") && line.indexOf(":\u0001") > 0 && line.endsWith("\u0001")) {
-            String request = line.substring(line.indexOf(":\u0001") + 2, line.length() - 1);
-            if (request.equals("VERSION")) {
-
-            } else if (request.startsWith("ACTION ")) {
-                this.onAction(sourceNick, sourceLogin, sourceHostname, target, request.substring(7));
-            } else if (request.startsWith("PING ")) {
-                this.onPing(sourceNick, sourceLogin, sourceHostname, target, request.substring(5));
-            } else if (request.equals("TIME")) {
-                this.onTime(sourceNick, sourceLogin, sourceHostname, target);
-            } else if (request.equals("FINGER")) {
-                this.onFinger(sourceNick, sourceLogin, sourceHostname, target);
-            } else {
-                this.onUnknown(line);
-            }
-        } else if (command.equals("PRIVMSG") && this.channelPrefix.indexOf(target.charAt(0)) >= 0) {
-            this.onMessage(target, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
-        } else if (command.equals("PRIVMSG")) {
-            this.onPrivateMessage(sourceNick, sourceLogin, sourceHostname, target, line.substring(line.indexOf(" :") + 2));
-        } else if (command.equals("JOIN")) {
-            String channel = target;
-            this.addUser(channel, new User("", sourceNick));
-            this.onJoin(channel, sourceNick, sourceLogin, sourceHostname);
-        } else if (command.equals("PART")) {
-            this.removeUser(target, sourceNick);
-            if (sourceNick.equals(this.getName())) {
-                this.removeChannel(target);
-            }
-            this.onPart(target, sourceNick, sourceLogin, sourceHostname);
-        } else if (command.equals("NICK")) {
-            String newNick = target;
-            this.renameUser(sourceNick, newNick);
-            if (sourceNick.equals(this.getNick())) {
-                this.setNick(newNick);
-            }
-            this.onNickChange(sourceNick, sourceLogin, sourceHostname, newNick);
-        } else if (command.equals("NOTICE")) {
-            this.onNotice(sourceNick, sourceLogin, sourceHostname, target, line.substring(line.indexOf(" :") + 2));
-        } else if (command.equals("QUIT")) {
-            this.onQuit(sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
-            if (sourceNick.equals(this.getNick())) {
-                this.removeAllChannels();
-            } else {
-                this.removeUser(sourceNick);
-            }
-        }
-    }
-
-    protected void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String substring) {
-    }
-
-    protected void onNotice(String sourceNick, String sourceLogin, String sourceHostname, String target, String substring) {
-    }
-
-    protected final void renameUser(String sourceNick, String newNick) {
-        synchronized (this.channels) {
-            Enumeration<String> enumeration = this.channels.keys();
-            while (enumeration.hasMoreElements()) {
-                String channel = enumeration.nextElement();
-                User user = this.removeUser(channel, sourceNick);
-                if (null != user) {
-                    user = new User(user.getPrefix(), newNick);
-                    this.addUser(channel, user);
-                }
-            }
-        }
-    }
-
-    protected void onPart(String target, String sourceNick, String sourceLogin, String sourceHostname) {
-    }
-
-    private final void removeChannel(String channel) {
-        channel = channel.toLowerCase();
-        synchronized (this.channels) {
-            this.channels.remove(channel);
-        }
-    }
-
-    private final User removeUser(String target, String sourceNick) {
-        target = target.toLowerCase();
-        User user = new User("", sourceNick);
-        synchronized (this.channels) {
-            Hashtable<User, User> userUserHashtable = this.channels.get(target);
-            if (null != userUserHashtable) {
-                return userUserHashtable.remove(user);
-            }
-        }
-        return null;
-    }
-
-    private final void removeUser(String sourceNick) {
-        synchronized (this.channels) {
-            Enumeration<String> enumeration = this.channels.keys();
-            while (enumeration.hasMoreElements()) {
-                String channel = enumeration.nextElement();
-                this.removeUser(channel, sourceNick);
-            }
-        }
-    }
-
-    protected void onJoin(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
-    }
-
-    private void addUser(String channel, User user) {
-        channel = channel.toLowerCase();
-        synchronized (this.channels) {
-            Hashtable<User, User> userUserHashtable = this.channels.get(channel);
-            if (userUserHashtable == null) {
-                userUserHashtable = new Hashtable<>();
-                this.channels.put(channel, userUserHashtable);
-            }
-            userUserHashtable.put(user, user);
-        }
-    }
-
-    protected void onPrivateMessage(String sourceNick, String sourceLogin, String sourceHostname, String target, String substring) {
-    }
-
-    protected void onMessage(String target, String sourceNick, String sourceLogin, String sourceHostname, String substring) {
-        
-    }
-
-    protected void onFinger(String sourceNick, String sourceLogin, String sourceHostname, String target) {
-        this.sendRawLine("NOTICE " + sourceNick + " :\u0001FINGER " + this.finger + "\u0001");
-    }
-
-    protected void onTime(String sourceNick, String sourceLogin, String sourceHostname, String target) {
-        this.sendRawLine("NOTICE " + sourceNick + " :\u0001TIME " + new Date().toString() + "\u0001");
-    }
-
-    protected void onPing(String sourceNick, String sourceLogin, String sourceHostname, String target, String substring) {
-        this.sendRawLine("NOTICE " + sourceNick + " :\u0001PING " + substring + "\u0001");
-    }
-
-    protected void onAction(String sourceNick, String sourceLogin, String sourceHostname, String target, String substring) {
-    }
-
-    private void onUnknown(String line) {
-
-    }
-
-    private final synchronized void sendRawLineViaQueue(String line) {
-        if (null == line) {
-            throw new NullPointerException("Gagal kirim ke server.");
-        }
-        if (isConnected()) {
-            this.outputQueue.add(line);
-        }
-    }
-
-    private void onNickChange(String oldNick, String login, String s, String nick) {
-
     }
 
     private final void processServerResponse(int code, String response) {
@@ -496,62 +250,5 @@ public abstract class IRCClient {
 
     public String getName() {
         return name;
-    }
-
-    public void setNick(String nick) {
-        this.nick = nick;
-    }
-
-    public String getSaslUsername() {
-        return this.saslUsername;
-    }
-
-    public void setSaslUsername(String saslUsername) {
-        this.saslUsername = saslUsername;
-    }
-
-    public String getSaslPassword() {
-        return this.saslPassword;
-    }
-
-    public String getNick() {
-        return this.nick;
-    }
-
-    public void setSaslPassword(String saslPassword) {
-        this.saslPassword = saslPassword;
-    }
-
-    public void setSaslCredentials(String saslUsername, String saslPassword) {
-        setSaslPassword(saslPassword);
-        setSaslUsername(saslUsername);
-    }
-
-    public void setAutoNickChange(boolean autoNickChange) {
-        this.autoNickChange = autoNickChange;
-    }
-
-    public List<String> getAliases() {
-        return this.aliases;
-    }
-
-    public final void joinChannel(String channel) {
-        this.sendRawLine("JOIN " + channel);
-    }
-
-    public final void joinChannel(String channel, String key) {
-        this.joinChannel(channel + ' ' + key);
-    }
-
-    public final void partChannel(String channel) {
-        this.sendRawLine("PART " + channel);
-    }
-
-    public void quitServer() {
-        this.quitServer("");
-    }
-
-    public void quitServer(String reason) {
-        this.sendRawLine("QUIT :" + reason);
     }
 }
