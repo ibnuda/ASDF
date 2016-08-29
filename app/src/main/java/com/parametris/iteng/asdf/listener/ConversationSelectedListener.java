@@ -11,7 +11,6 @@ import com.parametris.iteng.asdf.model.Conversation;
 import com.parametris.iteng.asdf.model.Server;
 
 public class ConversationSelectedListener implements ViewPager.OnPageChangeListener {
-    // TODO: 8/26/2016 complete this shit. 
     private final Context context;
     private final Server server;
     private final TextView textView;
