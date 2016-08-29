@@ -2,10 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ASDF.iml" filepath="$PROJECT_DIR$/ASDF.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ASDF.iml" filepath="$PROJECT_DIR$/.idea/modules/ASDF.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ASDF.iml" filepath="$PROJECT_DIR$/ASDF.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/pircbot/pircbot.iml" filepath="$PROJECT_DIR$/.idea/modules/pircbot/pircbot.iml" />
       <module fileurl="file://$PROJECT_DIR$/pircbot/pircbot.iml" filepath="$PROJECT_DIR$/pircbot/pircbot.iml" />
     </modules>
   </component>
