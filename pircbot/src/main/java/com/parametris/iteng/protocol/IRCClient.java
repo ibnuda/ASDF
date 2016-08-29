@@ -1,6 +1,7 @@
 package com.parametris.iteng.protocol;
 
 import android.net.SSLCertificateSocketFactory;
+import android.util.Base64;
 
 import com.parametris.iteng.protocol.ssl.NaiveTrustManager;
 
@@ -8,7 +9,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
@@ -23,7 +23,6 @@ import java.util.StringTokenizer;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 
 public abstract class IRCClient {
@@ -66,6 +65,7 @@ public abstract class IRCClient {
     private boolean registered = false;
 
     private String name = "Yuhu";
+
     private final List<String> aliases = new ArrayList<>();
     private String nick = name;
     private String login = "Yuhu";
@@ -124,7 +124,56 @@ public abstract class IRCClient {
             OutputThread.sendRawLine(this, bufferedWriter, "CAP LS");
             OutputThread.sendRawLine(this, bufferedWriter, "CAP REQ :sasl");
             OutputThread.sendRawLine(this, bufferedWriter, "CAP END");
+            OutputThread.sendRawLine(this, bufferedWriter, "AUTHENTICATE PLAIN");
+
+            String authString = saslUsername + '\0' + saslUsername + '\0' + saslPassword;
+            String authStringEncoded = Base64.encodeToString(authString.getBytes(), Base64.NO_WRAP);
+
+            while (authStringEncoded.length() >= 400) {
+                String toSend = authStringEncoded.substring(0, 400);
+                authString = authStringEncoded.substring(400);
+
+                OutputThread.sendRawLine(this, bufferedWriter, "AUTHENTICATE " + toSend);
+            }
+
+            if (authStringEncoded.length() > 0) {
+                OutputThread.sendRawLine(this, bufferedWriter, "AUTHENTICATE " + authStringEncoded);
+            } else {
+                OutputThread.sendRawLine(this, bufferedWriter, "AUTHENTICATE +");
+            }
         }
+        OutputThread.sendRawLine(this, bufferedWriter, "NICK " + nick);
+        OutputThread.sendRawLine(this, bufferedWriter, "USER " + this.getLogin() + " 8 * : ");
+
+        this.inputThread = new InputThread(this, this.socket, bufferedReader, bufferedWriter);
+
+        this.setNick(nick);
+
+        String line = null;
+        line = bufferedReader.readLine();
+
+        if (null == line) {
+            throw new IOException("WUT WUT WUT");
+        }
+
+        this.handleLine(line);
+        this.socket.setSoTimeout(5 * 60 * 1000);
+
+        this.inputThread.start();
+        if (this.outputThread == null) {
+            this.outputThread = new OutputThread(this, this.outputQueue);
+            this.outputThread.start();
+        }
+
+        this.onConnect();
+    }
+
+    private void onConnect() {
+
+    }
+
+    private String getLogin() {
+        return this.login;
     }
 
     private void setSNIHost(SSLSocketFactory sslSocketFactory, SSLSocket sslSocket, String hostname) {
@@ -153,8 +202,10 @@ public abstract class IRCClient {
         return 0;
     }
 
-    public void sendRawLine(String line) {
-
+    public final synchronized void sendRawLine(String line) {
+        if (isConnected()) {
+            this.inputThread.sendRawLine(line);
+        }
     }
 
     public int getMaxLineLength() {
@@ -198,10 +249,70 @@ public abstract class IRCClient {
                         String response = line.substring(line.indexOf(error, senderInfo.length()) + 4, line.length());
 
                         this.processServerResponse(code, response);
+
+                        if (code == 443 && !this.registered) {
+                            if (autoNickChange) {
+                                String oldNick = this.nick;
+                                List<String> aliases = getAliases();
+                                if (this.autoNickTries - 1 <= aliases.size()) {
+                                    this.nick = aliases.get(this.autoNickTries - 2);
+                                } else {
+                                    this.nick = getName() + (this.autoNickTries - aliases.size());
+                                }
+
+                                this.onNickChange(oldNick, getLogin(), "", this.nick);
+                                this.sendRawLineViaQueue("NICK " + this.nick);
+                            } else {
+                                this.socket.close();
+                                this.inputThread = null;
+                                throw new NickAlreadyInUseException(line);
+                            }
+                        }
+                        return;
+                    } else {
+                        sourceNick = senderInfo;
+                        target = token;
+                        if (sourceNick.contains("!") && !sourceNick.contains("@")) {
+                            String[] chunks = sourceNick.split("!");
+                            sourceNick = chunks[0];
+                        }
+                        if (command.equalsIgnoreCase("nick")) {
+                            target = stringTokenizer.nextToken();
+                        }
                     }
+                } else {
+                    this.onUnknown(line);
+                    return;
                 }
             }
         }
+        command = command.toUpperCase();
+        if (sourceNick.startsWith(":")) {
+            sourceNick = sourceNick.substring(1);
+        }
+        if (null == target) {
+            target = stringTokenizer.nextToken();
+        }
+        if (target.startsWith(":")) {
+            target.substring(1);
+        }
+    }
+
+    private void onUnknown(String line) {
+
+    }
+
+    private final synchronized void sendRawLineViaQueue(String line) {
+        if (null == line) {
+            throw new NullPointerException("Gagal kirim ke server.");
+        }
+        if (isConnected()) {
+            this.outputQueue.add(line);
+        }
+    }
+
+    private void onNickChange(String oldNick, String login, String s, String nick) {
+
     }
 
     private final void processServerResponse(int code, String response) {
@@ -250,5 +361,58 @@ public abstract class IRCClient {
 
     public String getName() {
         return name;
+    }
+
+    public void setNick(String nick) {
+        this.nick = nick;
+    }
+
+    public String getSaslUsername() {
+        return this.saslUsername;
+    }
+
+    public void setSaslUsername(String saslUsername) {
+        this.saslUsername = saslUsername;
+    }
+
+    public String getSaslPassword() {
+        return this.saslPassword;
+    }
+
+    public void setSaslPassword(String saslPassword) {
+        this.saslPassword = saslPassword;
+    }
+
+    public void setSaslCredentials(String saslUsername, String saslPassword) {
+        setSaslPassword(saslPassword);
+        setSaslUsername(saslUsername);
+    }
+
+    public void setAutoNickChange(boolean autoNickChange) {
+        this.autoNickChange = autoNickChange;
+    }
+
+    public List<String> getAliases() {
+        return this.aliases;
+    }
+
+    public final void joinChannel(String channel) {
+        this.sendRawLine("JOIN " + channel);
+    }
+
+    public final void joinChannel(String channel, String key) {
+        this.joinChannel(channel + ' ' + key);
+    }
+
+    public final void partChannel(String channel) {
+        this.sendRawLine("PART " + channel);
+    }
+
+    public void quitServer() {
+        this.quitServer("");
+    }
+
+    public void quitServer(String reason) {
+        this.sendRawLine("QUIT :" + reason);
     }
 }
