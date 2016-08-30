@@ -78,6 +78,10 @@ public abstract class IRCClient {
 
     public IRCClient() {}
 
+    public String getVersion() {
+        return version;
+    }
+
     public final synchronized void connect(String hostname) throws IOException, IRCException, NickAlreadyInUseException {
         this.connect(hostname, 6667, null);
     }
@@ -130,6 +134,9 @@ public abstract class IRCClient {
             OutputThread.sendRawLine(this, bufferedWriter, "CAP REQ :sasl");
             OutputThread.sendRawLine(this, bufferedWriter, "CAP END");
         }
+
+        OutputThread.sendRawLine(this, bufferedWriter, "NICK " + nick);
+        OutputThread.sendRawLine(this, bufferedWriter, "USER " + this.getLogin() + " 8 * :" + this.getVersion());
     }
 
     private void setSNIHost(SSLSocketFactory sslSocketFactory, SSLSocket sslSocket, String hostname) {
@@ -319,6 +326,13 @@ public abstract class IRCClient {
         }
     }
 
+    protected void onInvite(String target, String sourceNick, String sourceLogin, String sourceHostname, String substring) {
+        
+    }
+
+    protected void onTopic(String target, String substring, String sourceNick, long l, boolean b) {
+    }
+
     private void processMode(String target, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
         if (this.channelPrefix.indexOf(target.charAt(0)) >= 0) {
             String channel = target;
@@ -419,9 +433,132 @@ public abstract class IRCClient {
 
             this.onMode(channel, sourceNick, sourceLogin, sourceHostname, mode);
         } else {
-            // The mode of a user is being changed.
             String nick = target;
             this.onUserMode(nick, sourceNick, sourceLogin, sourceHostname, mode);
+        }
+    }
+
+    protected void onUserMode(String nick, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
+    }
+
+    protected void onMode(String channel, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
+    }
+
+    protected void onRemoveSecret(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onSetSecret(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onRemovePrivate(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onSetPrivate(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onRemoveModerated(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onSetModerated(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onRemoveInviteOnly(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onSetInviteOnly(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onRemoveNoExternalMessages(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onSetNoExternalMessages(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onRemoveTopicProtection(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onSetTopicProtection(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onRemoveChannelBan(String channel, String sourceNick, String sourceLogin, String sourceHostname, String param) {
+    }
+
+    protected void onSetChannelBan(String channel, String sourceNick, String sourceLogin, String sourceHostname, String param) {
+    }
+
+    protected void onRemoveChannelLimit(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    protected void onSetChannelLimit(String channel, String sourceNick, String sourceLogin, String sourceHostname, int i) {
+    }
+
+    protected void onRemoveChannelKey(String channel, String sourceNick, String sourceLogin, String sourceHostname, String param) {
+    }
+
+    protected void onSetChannelKey(String channel, String sourceNick, String sourceLogin, String sourceHostname, String param) {
+    }
+
+    protected void onDeVoice(String channel, String sourceNick, String sourceLogin, String sourceHostname, String param) {
+    }
+
+    protected void onVoice(String channel, String sourceNick, String sourceLogin, String sourceHostname, String param) {
+    }
+
+    protected void onDeop(String channel, String sourceNick, String sourceLogin, String sourceHostname, String param) {
+    }
+
+    protected void onOp(String channel, String sourceNick, String sourceLogin, String sourceHostname, String param) {
+    }
+
+    private void updateUser(String channel, int opAdd, String param) {
+        channel = channel.toLowerCase();
+        synchronized (this.channels) {
+            Hashtable<User, User> userUserHashtable = this.channels.get(channel);
+            User user = null;
+            if (null != userUserHashtable) {
+                Enumeration<User> enumeration = userUserHashtable.elements();
+                while (enumeration.hasMoreElements()) {
+                    User userObj = enumeration.nextElement();
+                    if (userObj.getNick().equalsIgnoreCase(param)) {
+                        switch (opAdd) {
+                            case OP_ADD:
+                                if (userObj.hasVoice()) {
+                                    user = new User("@+", param);
+                                } else {
+                                    user = new User("@", param);
+                                }
+                                break;
+                            case OP_REMOVE:
+                                if (userObj.hasVoice()) {
+                                    user = new User("+", param);
+                                } else {
+                                    user = new User("", param);
+                                }
+                                break;
+                            case VOICE_ADD:
+                                if (userObj.isOp()) {
+                                    user = new User("@+", param);
+                                } else {
+                                    user = new User("+", param);
+                                }
+                                break;
+                            case VOICE_REMOVE:
+                                if (userObj.isOp()) {
+                                    user = new User("@", param);
+                                } else {
+                                    user = new User("", param);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+            if (null != null) {
+                userUserHashtable.put(user, user);
+            } else {
+                user = new User("", param);
+                userUserHashtable.put(user, user);
+            }
         }
     }
 
@@ -604,12 +741,18 @@ public abstract class IRCClient {
                 }
                 break;
             case RPL_ENDOFNAMES:
-                response.substring(response.indexOf(' ') + 1, response.indexOf(" :"));
+                channel = response.substring(response.indexOf(' ') + 1, response.indexOf(" :"));
                 User[] users = this.getUsers(channel);
                 this.onUserList(channel, users);
                 break;
         }
         this.onServerResponse(code, response);
+    }
+
+    private void onUserList(String channel, User[] users) {
+    }
+
+    protected void onTopic(String channel, String topic) {
     }
 
     private void onChannelInfo(String channel, int userCount, String topic) {
@@ -642,5 +785,22 @@ public abstract class IRCClient {
 
     public void setNick(String nick) {
         this.nick = nick;
+    }
+
+    public final User[] getUsers(String channel) {
+        channel = channel.toLowerCase();
+        User[] userArray = new User[0];
+        synchronized (this.channels) {
+            Hashtable<User, User> userUserHashtable = this.channels.get(channel);
+            if (null != userUserHashtable) {
+                userArray = new User[userUserHashtable.size()];
+                Enumeration<User> enumeration = userUserHashtable.elements();
+                for (int i = 0; i < userArray.length; i++) {
+                    User user = enumeration.nextElement();
+                    userArray[i] = user;
+                }
+            }
+        }
+        return userArray;
     }
 }
