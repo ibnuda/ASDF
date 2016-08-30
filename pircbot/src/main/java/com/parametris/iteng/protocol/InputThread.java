@@ -39,7 +39,7 @@ public class InputThread extends Thread {
             boolean running = true;
             while (running) {
                 try {
-                    String line = null;
+                    String line;
                     while ((line = bufferedReader.readLine()) != null) {
                         try {
                             ircClient.handleLine(line);

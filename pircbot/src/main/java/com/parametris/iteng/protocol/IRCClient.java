@@ -137,6 +137,38 @@ public abstract class IRCClient {
 
         OutputThread.sendRawLine(this, bufferedWriter, "NICK " + nick);
         OutputThread.sendRawLine(this, bufferedWriter, "USER " + this.getLogin() + " 8 * :" + this.getVersion());
+
+        this.inputThread = new InputThread(this, this.socket, bufferedReader, bufferedWriter);
+        this.setNick(nick);
+
+        String line = null;
+        line = bufferedReader.readLine();
+
+        if (null == line) {
+            throw new IOException("Tidak dapat menyambung ke server.");
+        }
+
+        this.handleLine(line);
+        this.socket.setSoTimeout(5 * 60 * 1000);
+        this.inputThread.start();
+
+        if (null == this.outputThread) {
+            this.outputThread = new OutputThread(this, this.outputQueue);
+            this.outputThread.start();
+        }
+
+        this.onConnect();
+    }
+
+    protected void onConnect() {
+    }
+
+    protected void onRegister() {
+        this.registered = true;
+    }
+
+    protected void onDisconnect() {
+        this.registered = false;
     }
 
     private void setSNIHost(SSLSocketFactory sslSocketFactory, SSLSocket sslSocket, String hostname) {
