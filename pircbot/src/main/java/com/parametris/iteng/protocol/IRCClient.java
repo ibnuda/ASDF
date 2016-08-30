@@ -1,6 +1,7 @@
 package com.parametris.iteng.protocol;
 
 import android.net.SSLCertificateSocketFactory;
+import android.support.annotation.Nullable;
 
 import com.parametris.iteng.protocol.ssl.NaiveTrustManager;
 
@@ -8,7 +9,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
@@ -16,6 +16,9 @@ import java.net.Socket;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -23,7 +26,6 @@ import java.util.StringTokenizer;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 
 public abstract class IRCClient {
@@ -70,6 +72,9 @@ public abstract class IRCClient {
     private String nick = name;
     private String login = "Yuhu";
     private final String channelPrefix = "#&+!";
+    
+    private static final String version = "notice me senpai.";
+    private static final String finger = "finger...";
 
     public IRCClient() {}
 
@@ -198,10 +203,342 @@ public abstract class IRCClient {
                         String response = line.substring(line.indexOf(error, senderInfo.length()) + 4, line.length());
 
                         this.processServerResponse(code, response);
+
+                        if (443 == code && !this.registered) {
+                            if (this.autoNickChange) {
+                                String oldNick = this.nick;
+                                List<String> aliases = getAliases();
+                                this.autoNickTries++;
+                                if (this.autoNickTries - 1 <= aliases.size()) {
+                                    this.nick = aliases.get(this.autoNickTries - 2);
+                                } else {
+                                    this.nick = getName() + (this.autoNickTries - aliases.size());
+                                }
+
+                                this.onNickChange(oldNick, getLogin(), "", this.nick);
+                                this.sendRawLineViaQueue("NICK " + this.nick);
+                            } else {
+                                this.socket.close();
+                                this.inputThread = null;
+                                throw new NickAlreadyInUseException(line);
+                            }
+                        }
+                        return;
+                    } else {
+                        sourceNick = senderInfo;
+                        target = token;
+                        if (sourceNick.contains("!") && !sourceNick.contains("@")) {
+                            String[] chunks = sourceNick.split("!");
+                            sourceNick = chunks[0];
+                        }
+                        if (command.equalsIgnoreCase("nick")) {
+                            target = stringTokenizer.nextToken();
+                        }
                     }
+                } else {
+                    this.onUnknown(line);
+                    return;
                 }
             }
         }
+        command = command.toUpperCase();
+        if (sourceNick.startsWith(":")) {
+            sourceNick = sourceNick.substring(1);
+        }
+        if (null == target) {
+            target = stringTokenizer.nextToken();
+        }
+        if (target.startsWith(":")) {
+            target = target.substring(1);
+        }
+
+        if (command.equals("PRIVMSG") && line.indexOf(":\u0001") > 0 && line.endsWith("\u0001")) {
+            String request = line.substring(line.indexOf(":\u0001") + 2, line.length() - 1);
+            if (request.equals("VERSION")) {
+                this.onVersion(sourceNick, sourceLogin, sourceHostname, target);
+            } else if (request.startsWith("ACTION ")) {
+                this.onAction(sourceNick, sourceLogin, sourceHostname, target, request.substring(7));
+            } else if (request.startsWith("PING ")) {
+                this.onPing(sourceNick, sourceLogin, sourceHostname, target, request.substring(5));
+            } else if (request.equals("TIME")) {
+                this.onTime(sourceNick, sourceLogin, sourceHostname, target);
+            } else if (request.equals("FINGER")) {
+                this.onFinger(sourceNick, sourceLogin, sourceHostname, target);
+            } else {
+                this.onUnknown(line);
+            }
+        } else if (command.equals("PRIVMSG") && this.channelPrefix.indexOf(target.charAt(0)) >= 0) {
+            this.onMessage(target, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
+        } else if (command.equals("PRIVMSG")) {
+            this.onPrivateMessage(sourceNick, sourceLogin, sourceHostname, target, line.substring(line.indexOf(" :") + 2));
+        } else if (command.equals("JOIN")) {
+            String channel = target;
+            this.addUser(channel, new User("", sourceNick));
+            this.onJoin(channel, sourceNick, sourceLogin, sourceHostname);
+        } else if (command.equals("PART")) {
+            this.removeUser(target, sourceNick);
+            if (sourceNick.equals(this.getNick())) {
+                this.removeChannel(target);
+            }
+            this.onPart(target, sourceNick, sourceLogin, sourceHostname);
+        } else if (command.equals("NICK")) {
+            String newNick = target;
+            this.renameUser(sourceNick, newNick);
+            if (sourceNick.equals(this.getNick())) {
+                this.setNick(newNick);
+            }
+            this.onNickChange(sourceNick, sourceLogin, sourceHostname, newNick);
+        } else if (command.equals("NOTICE")) {
+            this.onNotice(sourceNick, sourceLogin, sourceHostname, target, line.substring(line.indexOf(" :") + 2));
+        } else if (command.equals("QUIT")) {
+            this.onQuit(sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
+            if (sourceNick.equals(this.getNick())) {
+                this.removeAllChannels();
+            } else {
+                this.removeUser(sourceNick);
+            }
+        } else if (command.equals("KICK")) {
+            String recipient = stringTokenizer.nextToken();
+            if (recipient.equals(this.getNick())) {
+                this.removeChannel(target);
+            }
+            this.removeUser(target, recipient);
+            this.onKick(target, sourceNick, sourceLogin, sourceHostname, recipient, line.substring(line.indexOf(" :") + 2));
+        } else if (command.equals("MODE")) {
+            String mode = line.substring(line.indexOf(target, 2) + target.length() + 1);
+            if (mode.startsWith(":")) {
+                mode = mode.substring(1);
+            }
+            this.processMode(target, sourceNick, sourceLogin, sourceHostname, mode);
+        } else if (command.equals("TOPIC")) {
+            this.onTopic(target, line.substring(line.indexOf(" :") + 2), sourceNick, System.currentTimeMillis(), true);
+        } else if (command.equals("INVITE")) {
+            this.onInvite(target, sourceNick, sourceLogin, sourceHostname, line.substring(line.indexOf(" :") + 2));
+        } else {
+            this.onUnknown(line);
+        }
+    }
+
+    private void processMode(String target, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
+        if (this.channelPrefix.indexOf(target.charAt(0)) >= 0) {
+            String channel = target;
+            StringTokenizer stringTokenizer = new StringTokenizer(mode);
+            String[] params = new String[stringTokenizer.countTokens()];
+
+            int t = 0;
+            while (stringTokenizer.hasMoreTokens()) {
+                params[t] = stringTokenizer.nextToken();
+                t++;
+            }
+
+            char pn = ' ';
+            int p = 1;
+
+            for (int i = 0; i < params[0].length(); i++) {
+                char atPos = params[0].charAt(i);
+
+                if (atPos == '+' || atPos == '-') {
+                    pn = atPos;
+                } else if (atPos == 'o') {
+                    if (pn == '+') {
+                        this.updateUser(channel, OP_ADD, params[p]);
+                        onOp(channel, sourceNick, sourceLogin, sourceHostname, params[p]);
+                    } else {
+                        this.updateUser(channel, OP_REMOVE, params[p]);
+                        onDeop(channel, sourceNick, sourceLogin, sourceHostname, params[p]);
+                    }
+                    p++;
+                } else if (atPos == 'v') {
+                    if (pn == '+') {
+                        this.updateUser(channel, VOICE_ADD, params[p]);
+                        onVoice(channel, sourceNick, sourceLogin, sourceHostname, params[p]);
+                    } else {
+                        this.updateUser(channel, VOICE_REMOVE, params[p]);
+                        onDeVoice(channel, sourceNick, sourceLogin, sourceHostname, params[p]);
+                    }
+                    p++;
+                } else if (atPos == 'k') {
+                    if (pn == '+') {
+                        onSetChannelKey(channel, sourceNick, sourceLogin, sourceHostname, params[p]);
+                    } else {
+                        onRemoveChannelKey(channel, sourceNick, sourceLogin, sourceHostname, params[p]);
+                    }
+                    p++;
+                } else if (atPos == 'l') {
+                    if (pn == '+') {
+                        onSetChannelLimit(channel, sourceNick, sourceLogin, sourceHostname, Integer.parseInt(params[p]));
+                        p++;
+                    } else {
+                        onRemoveChannelLimit(channel, sourceNick, sourceLogin, sourceHostname);
+                    }
+                } else if (atPos == 'b') {
+                    if (pn == '+') {
+                        onSetChannelBan(channel, sourceNick, sourceLogin, sourceHostname,params[p]);
+                    } else {
+                        onRemoveChannelBan(channel, sourceNick, sourceLogin, sourceHostname, params[p]);
+                    }
+                    p++;
+                } else if (atPos == 't') {
+                    if (pn == '+') {
+                        onSetTopicProtection(channel, sourceNick, sourceLogin, sourceHostname);
+                    } else {
+                        onRemoveTopicProtection(channel, sourceNick, sourceLogin, sourceHostname);
+                    }
+                } else if (atPos == 'n') {
+                    if (pn == '+') {
+                        onSetNoExternalMessages(channel, sourceNick, sourceLogin, sourceHostname);
+                    } else {
+                        onRemoveNoExternalMessages(channel, sourceNick, sourceLogin, sourceHostname);
+                    }
+                } else if (atPos == 'i') {
+                    if (pn == '+') {
+                        onSetInviteOnly(channel, sourceNick, sourceLogin, sourceHostname);
+                    } else {
+                        onRemoveInviteOnly(channel, sourceNick, sourceLogin, sourceHostname);
+                    }
+                } else if (atPos == 'm') {
+                    if (pn == '+') {
+                        onSetModerated(channel, sourceNick, sourceLogin, sourceHostname);
+                    } else {
+                        onRemoveModerated(channel, sourceNick, sourceLogin, sourceHostname);
+                    }
+                } else if (atPos == 'p') {
+                    if (pn == '+') {
+                        onSetPrivate(channel, sourceNick, sourceLogin, sourceHostname);
+                    } else {
+                        onRemovePrivate(channel, sourceNick, sourceLogin, sourceHostname);
+                    }
+                } else if (atPos == 's') {
+                    if (pn == '+') {
+                        onSetSecret(channel, sourceNick, sourceLogin, sourceHostname);
+                    } else {
+                        onRemoveSecret(channel, sourceNick, sourceLogin, sourceHostname);
+                    }
+                }
+            }
+
+            this.onMode(channel, sourceNick, sourceLogin, sourceHostname, mode);
+        } else {
+            // The mode of a user is being changed.
+            String nick = target;
+            this.onUserMode(nick, sourceNick, sourceLogin, sourceHostname, mode);
+        }
+    }
+
+    protected void onKick(String target, String sourceNick, String sourceLogin, String sourceHostname, String recipient, String substring) {
+    }
+
+    protected void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String substring) {
+    }
+
+    protected void onNotice(String sourceNick, String sourceLogin, String sourceHostname, String target, String substring) {
+    }
+
+    private final void renameUser(String sourceNick, String newNick) {
+        synchronized (this.channels) {
+            Enumeration<String> enumeration = this.channels.keys();
+            while (enumeration.hasMoreElements()) {
+                String channel = enumeration.nextElement();
+                User user = this.removeUser(sourceNick, newNick);
+                if (null != user) {
+                    user = new User(user.getPrefix(), newNick);
+                    this.addUser(channel, user);
+                }
+            }
+        }
+    }
+
+    protected void onPart(String target, String sourceNick, String sourceLogin, String sourceHostname) {
+    }
+
+    private void removeChannel(String target) {
+
+    }
+
+    private final void removeUser(String  nick) {
+        synchronized (this.channels) {
+            Enumeration<String> enumeration = this.channels.keys();
+            while (enumeration.hasMoreElements()) {
+                String channel = enumeration.nextElement();
+                this.removeUser(channel, nick);
+            }
+        };
+    }
+
+    @Nullable
+    private final User removeUser(String target, String sourceNick) {
+        target = target.toLowerCase();
+        User user = new User("", sourceNick);
+        synchronized (this.channels) {
+            Hashtable<User, User> userUserHashtable = this.channels.get(target);
+            if (null != userUserHashtable) {
+                return userUserHashtable.remove(user);
+            }
+        }
+        return null;
+    }
+
+    protected void onJoin(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
+        
+    }
+
+    private final void addUser(String channel, User user) {
+        channel = channel.toLowerCase();
+        synchronized (this.channels) {
+            Hashtable<User, User> userUserHashtable = this.channels.get(channel);
+            if (null == userUserHashtable) {
+                userUserHashtable = new Hashtable<>();
+                this.channels.put(channel, userUserHashtable);
+            }
+            userUserHashtable.put(user, user);
+        }
+    }
+
+    protected void onPrivateMessage(String sourceNick, String sourceLogin, String sourceHostname, String target, String substring) {
+    }
+
+    protected void onMessage(String target, String sourceNick, String sourceLogin, String sourceHostname, String substring) {
+    }
+
+    private void onFinger(String sourceNick, String sourceLogin, String sourceHostname, String target) {
+        this.sendRawLine("NOTICE " + sourceNick + "\u0001PING" + this.finger + "\u0001");
+    }
+
+    private void onTime(String sourceNick, String sourceLogin, String sourceHostname, String target) {
+        this.sendRawLine("NOTICE " + sourceNick + "\u0001PING" + new Date().toString() + "\u0001");
+    }
+
+    protected void onPing(String sourceNick, String sourceLogin, String sourceHostname, String target, String substring) {
+        this.sendRawLine("NOTICE " + sourceNick + "\u0001PING" + substring + "\u0001");
+    }
+
+    protected void onAction(String sourceNick, String sourceLogin, String sourceHostname, String target, String substring) {
+        
+    }
+
+    protected void onVersion(String sourceNick, String sourceLogin, String sourceHostname, String target) {
+        this.sendRawLine("NOTICE " + sourceNick + " :\u0001VERSION" + this.version + "\u0001");
+    }
+
+    protected void onUnknown(String line) {
+
+    }
+
+    public final synchronized void sendRawLineViaQueue(String line) {
+        if (null == line) {
+            throw new NullPointerException("Sorry, you can't send null message.");
+        }
+        if (isConnected()) {
+            outputQueue.add(line);
+        }
+    }
+
+    protected void onNickChange(String oldNick, String login, String s, String nick) {
+        
+    }
+
+    public final List<String> getAliases() {
+        return Collections.unmodifiableList(this.aliases);
     }
 
     private final void processServerResponse(int code, String response) {
@@ -221,12 +558,55 @@ public abstract class IRCClient {
                 this.onChannelInfo(channel, userCount, topic);
                 break;
             case RPL_TOPIC:
+                first = response.indexOf(' ');
+                second = response.indexOf(' ', first + 1);
+                colon = response.indexOf(':');
+                channel = response.substring(first + 1, second);
+                topic = response.substring(code + 1);
+                this.topics.put(channel, topic);
+                this.onTopic(channel, topic);
                 break;
             case RPL_TOPICINFO:
+                StringTokenizer stringTokenizer = new StringTokenizer(response);
+                stringTokenizer.nextToken();
+                channel = stringTokenizer.nextToken();
+                String setBy = stringTokenizer.nextToken();
+                Long date = 0L;
+                try {
+                    date = Long.parseLong(stringTokenizer.nextToken()) * 1000;
+                } catch (NumberFormatException e) {
+                }
+                topic = this.topics.get(channel);
+                this.topics.remove(channel);
+                this.onTopic(channel, topic, setBy, date, false);
                 break;
             case RPL_NAMREPLY:
+                int channelEndIndex = response.indexOf(" :");
+                channel = response.substring(response.lastIndexOf(' ', channelEndIndex - 1) + 1, channelEndIndex);
+                StringTokenizer tokenizer = new StringTokenizer(response.substring(response.indexOf(" :") + 2));
+                while (tokenizer.hasMoreTokens()) {
+                    String nick = tokenizer.nextToken();
+                    String prefix = "";
+                    if (nick.startsWith("@")) {
+                        prefix = "@";
+                    }
+                    else if (nick.startsWith("+")) {
+                        prefix = "+";
+                    }
+                    else if (nick.startsWith(".")) {
+                        prefix = ".";
+                    }
+                    else if (nick.startsWith("%")) {
+                        prefix = "%";
+                    }
+                    nick = nick.substring(prefix.length());
+                    this.addUser(channel, new User(prefix, nick));
+                }
                 break;
             case RPL_ENDOFNAMES:
+                response.substring(response.indexOf(' ') + 1, response.indexOf(" :"));
+                User[] users = this.getUsers(channel);
+                this.onUserList(channel, users);
                 break;
         }
         this.onServerResponse(code, response);
@@ -250,5 +630,17 @@ public abstract class IRCClient {
 
     public String getName() {
         return name;
+    }
+
+    public String getLogin() {
+        return this.login;
+    }
+
+    public String getNick() {
+        return this.nick;
+    }
+
+    public void setNick(String nick) {
+        this.nick = nick;
     }
 }
