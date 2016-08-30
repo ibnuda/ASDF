@@ -1,7 +1,6 @@
 package com.parametris.iteng.protocol;
 
 import android.net.SSLCertificateSocketFactory;
-import android.support.annotation.Nullable;
 
 import com.parametris.iteng.protocol.ssl.NaiveTrustManager;
 
@@ -634,7 +633,6 @@ public abstract class IRCClient {
         };
     }
 
-    @Nullable
     private final User removeUser(String target, String sourceNick) {
         target = target.toLowerCase();
         User user = new User("", sourceNick);
