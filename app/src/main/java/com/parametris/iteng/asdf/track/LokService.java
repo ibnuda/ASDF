@@ -164,6 +164,7 @@ public class LokService extends Service implements GoogleApiClient.ConnectionCal
         requestParams.put("sessionid", prefs.getString("sessionId", "TODO"));
         requestParams.put("accuracy", Float.toString(location.getAccuracy()));
         requestParams.put("altitude", Double.toString(location.getAltitude()));
+        requestParams.put("ammunition", Integer.toString(prefs.getInt("ammunition", 50)));
         requestParams.put("password", "parametrik2016");
 
         final AsyncHttpClient client = new AsyncHttpClient();

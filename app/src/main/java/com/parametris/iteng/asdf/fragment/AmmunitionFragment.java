@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,25 +16,37 @@ import com.parametris.iteng.asdf.R;
 
 public class AmmunitionFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
-    protected Spinner spinner;
-    protected ArrayAdapter<CharSequence> mAdapter;
+    private static final String TAG = AmmunitionFragment.class.getName();
+    protected Spinner ammunitionSpinner;
+    protected Spinner healthSpinner;
+    protected ArrayAdapter<CharSequence> ammunitionAdapter;
+    protected ArrayAdapter<CharSequence> healthAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_ammunition, container, false);
 
-        mAdapter = ArrayAdapter.createFromResource(getContext()
+        ammunitionAdapter = ArrayAdapter.createFromResource(getContext()
                 , R.array.soulja_conditions
                 , R.layout.support_simple_spinner_dropdown_item);
-        spinner = (Spinner) view.findViewById(R.id.spinner_ammunition);
-        spinner.setAdapter(mAdapter);
+        healthAdapter = ArrayAdapter.createFromResource(getContext()
+                , R.array.soulja_conditions
+                , R.layout.support_simple_spinner_dropdown_item);
 
-        int spinnerPosition = uYeah(mAdapter, "ammunition");
+        ammunitionSpinner = (Spinner) view.findViewById(R.id.spinner_ammunition);
+        ammunitionSpinner.setAdapter(ammunitionAdapter);
 
-        spinner.setSelection(spinnerPosition);
+        healthSpinner = (Spinner) view.findViewById(R.id.spinner_health);
+        healthSpinner.setAdapter(healthAdapter);
 
-        spinner.setOnItemSelectedListener(this);
+        int spinnerAmmunitionPosition = uYeah(ammunitionAdapter, "ammunition");
+        int spinnerHealthPosition = uYeah(healthAdapter, "health");
 
+        ammunitionSpinner.setSelection(spinnerAmmunitionPosition);
+        ammunitionSpinner.setOnItemSelectedListener(this);
+
+        healthSpinner.setSelection(spinnerHealthPosition);
+        healthSpinner.setOnItemSelectedListener(this);
         return view;
     }
 
@@ -42,7 +55,20 @@ public class AmmunitionFragment extends Fragment implements AdapterView.OnItemSe
         SharedPreferences sharedPreferences = getActivity()
                 .getSharedPreferences("asdf", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putInt("ammunition", Integer.valueOf(parent.getItemAtPosition(position).toString()));
+
+        Spinner spinner = (Spinner) parent;
+        String what = "anything_goes_here";
+
+        switch (spinner.getId()) {
+            case R.id.spinner_ammunition:
+                what = "ammunition";
+                break;
+            case R.id.spinner_health:
+                what = "health";
+                break;
+        }
+        Log.d(TAG, "onItemSelected: what :" + what);
+        editor.putInt(what, Integer.valueOf(parent.getItemAtPosition(position).toString()));
         editor.apply();
     }
 

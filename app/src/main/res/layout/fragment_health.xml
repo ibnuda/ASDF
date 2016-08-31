@@ -75,7 +75,7 @@
         android:layout_height="match_parent"
         android:padding="20dp">
         <LinearLayout
-            android:id="@+id/health_placement"
+            android:id="@+id/health_text_placement"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -92,7 +92,7 @@
                 android:paddingTop="150dp" />
         </LinearLayout>
         <LinearLayout
-            android:layout_below="@id/health_placement"
+            android:layout_below="@id/health_text_placement"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <Spinner

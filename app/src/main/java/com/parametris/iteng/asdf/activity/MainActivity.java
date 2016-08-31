@@ -142,9 +142,11 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
             case R.id.nav_home_map:
                 fragmentClass = MyMapFragment.class;
                 break;
+            /*
             case R.id.nav_condition_health:
                 fragmentClass = HealthFragment.class;
                 break;
+            */
             case R.id.nav_condition_ammunition:
                 fragmentClass = AmmunitionFragment.class;
                 break;
