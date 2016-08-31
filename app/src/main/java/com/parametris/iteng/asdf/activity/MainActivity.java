@@ -17,6 +17,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,16 +26,19 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.parametris.iteng.asdf.R;
 import com.parametris.iteng.asdf.fragment.AmmunitionFragment;
 import com.parametris.iteng.asdf.fragment.ChatFragment;
-import com.parametris.iteng.asdf.fragment.HealthFragment;
 import com.parametris.iteng.asdf.fragment.MyMapFragment;
 import com.parametris.iteng.asdf.model.Utils;
 import com.parametris.iteng.asdf.track.LokAlarmReceiver;
 
+import net.gotev.uploadservice.Logger;
 import net.gotev.uploadservice.MultipartUploadRequest;
 import net.gotev.uploadservice.ServerResponse;
 import net.gotev.uploadservice.UploadInfo;
@@ -42,8 +46,11 @@ import net.gotev.uploadservice.UploadNotificationConfig;
 import net.gotev.uploadservice.UploadService;
 import net.gotev.uploadservice.UploadStatusDelegate;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,12 +70,18 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
     AlarmManager alarmManager;
     Intent trackIntent;
     PendingIntent pendingIntent;
+    SharedPreferences sharedPreferences;
 
     Realm realm;
     RealmConfiguration realmConfiguration;
     Utils utils;
 
     Map<String, UploadProgressViewHolder> uploadProgressViewHolderMap = new HashMap<>();
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,17 +105,21 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction().replace(R.id.flContent, new MyMapFragment()).commit();
 
-        SharedPreferences sharedPreferences = this.getSharedPreferences("asdf", MODE_PRIVATE);
+        sharedPreferences = this.getSharedPreferences("asdf", MODE_PRIVATE);
         trackingNow = sharedPreferences.getBoolean("trackingNow", false);
         boolean firstTime = sharedPreferences.getBoolean("firstTime", true);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("imei", getDeviceId());
 
         if (firstTime) {
-            SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putBoolean("firstTime", false);
             editor.putString("username", "TODO");
-            editor.apply();
         }
+        editor.apply();
         trackLocation();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     private void trackLocation() {
@@ -138,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
         Fragment fragment = null;
 
         Class fragmentClass;
-        switch(menuItem.getItemId()) {
+        switch (menuItem.getItemId()) {
             case R.id.nav_home_map:
                 fragmentClass = MyMapFragment.class;
                 break;
@@ -160,8 +177,8 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
                 // startActivityForResult((new Intent(MainActivity.this, WusDatActivity.class)), 1);
                 // startActivity(new Intent(getApplicationContext(), WusDatActivity.class));
                 return;
-                // fragmentClass = PickFileFragment.class;
-                // break;
+            // fragmentClass = PickFileFragment.class;
+            // break;
             /*
             case R.id.nav_condition:
                 fragmentClass = HealthFragment.class;
@@ -245,17 +262,45 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
     private void uploadTheFile(String filename) {
         // TODO: 8/26/2016 tambah server untuk upload
         final String server = "http://192.168.1.104/~ibnu/haro.php";
+        Log.d(TAG, "uploadTheFile: filename : " + filename);
+        final String nameOfFile = getNameOfFile(filename);
+        Log.d(TAG, "uploadTheFile: nameOfFile : " + nameOfFile);
+        String newPath = prepareFile(filename);
+        Log.d(TAG, "uploadTheFile: newPath : " + newPath);
         try {
-            final String nameOfFile = getNameOfFile(filename);
             MultipartUploadRequest request = new MultipartUploadRequest(this, server)
-                    .addFileToUpload(filename, nameOfFile)
+                    .addFileToUpload(newPath, nameOfFile)
                     .setNotificationConfig(getNotificationConfig(nameOfFile))
                     .setMaxRetries(4);
             String uploadID = request.setDelegate(this).startUpload();
             addUploadToList(uploadID, nameOfFile);
         } catch (FileNotFoundException | MalformedURLException e) {
-            e.printStackTrace();
+            Log.e(TAG, "uploadTheFile: unable to upload.", e);
         }
+
+        FileUtils.deleteQuietly(new File(newPath));
+    }
+
+    private String prepareFile(String pathFile) {
+        // Get the "real name" of the file.
+        String imei = getDeviceId();
+        String username = sharedPreferences.getString("username", "seharusnya_username");
+        String oldName = getNameOfFile(pathFile);
+        String newName = imei + '_' + username + '_' + oldName;
+        String newPathFile = pathFile.replaceAll(oldName, newName);
+
+        // Copy the file;
+        try {
+            FileUtils.copyFile(new File(pathFile), new File(newPathFile));
+        } catch (IOException e) {
+            newPathFile = pathFile;
+        }
+        return newPathFile;
+    }
+
+    private String getDeviceId() {
+        TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        return telephonyManager.getDeviceId();
     }
 
     private void addUploadToList(String uploadID, String nameOfFile) {
@@ -270,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
         if (null == filename) {
             return null;
         }
-        final String [] parts = filename.split("/");
+        final String[] parts = filename.split("/");
         return parts[parts.length - 1];
     }
 
@@ -316,6 +361,7 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
         ProgressBar progressBar;
         Button button;
         String uploadId;
+
         UploadProgressViewHolder(View view, String filename) {
             itemView = view;
             textView = (TextView) itemView.findViewById(R.id.upload_title);

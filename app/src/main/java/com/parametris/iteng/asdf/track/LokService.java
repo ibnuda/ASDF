@@ -151,19 +151,26 @@ public class LokService extends Service implements GoogleApiClient.ConnectionCal
         editor.apply();
 
         final RequestParams requestParams = new RequestParams();
+        // Location related information.
+        requestParams.put("accuracy", Float.toString(location.getAccuracy()));
+        requestParams.put("altitude", Double.toString(location.getAltitude()));
         requestParams.put("latitude", Double.toString(location.getLatitude()));
         requestParams.put("longitude", Double.toString(location.getLongitude()));
         requestParams.put("speed", Float.toString(location.getSpeed()));
         requestParams.put("date", URLEncoder.encode(dateFormat.format(date)));
-
         if (totalDistance > 0) requestParams.put("distance", totalDistance);
         else requestParams.put("distance", 0.0);
 
+        // Identity related information.
+        // username : NRP-thingy.
+        // phone number : ??
         requestParams.put("username", prefs.getString("username", "TODO"));
         requestParams.put("phonenumber", prefs.getString("appId", "TODO"));
+        requestParams.put("imei", prefs.getString("imei", "please..."));
         requestParams.put("sessionid", prefs.getString("sessionId", "TODO"));
-        requestParams.put("accuracy", Float.toString(location.getAccuracy()));
-        requestParams.put("altitude", Double.toString(location.getAltitude()));
+
+        // Mission related information.
+
         requestParams.put("ammunition", Integer.toString(prefs.getInt("ammunition", 50)));
         requestParams.put("password", "parametrik2016");
 
