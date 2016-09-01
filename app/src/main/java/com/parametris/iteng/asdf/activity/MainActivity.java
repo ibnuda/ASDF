@@ -3,6 +3,7 @@ package com.parametris.iteng.asdf.activity;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,6 +11,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.SystemClock;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
@@ -26,7 +28,6 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -38,7 +39,6 @@ import com.parametris.iteng.asdf.fragment.MyMapFragment;
 import com.parametris.iteng.asdf.model.Utils;
 import com.parametris.iteng.asdf.track.LokAlarmReceiver;
 
-import net.gotev.uploadservice.Logger;
 import net.gotev.uploadservice.MultipartUploadRequest;
 import net.gotev.uploadservice.ServerResponse;
 import net.gotev.uploadservice.UploadInfo;
@@ -58,7 +58,7 @@ import java.util.Map;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 
-public class MainActivity extends AppCompatActivity implements UploadStatusDelegate {
+public class MainActivity extends AppCompatActivity implements UploadStatusDelegate, View.OnClickListener {
     public static final String TAG = "MainActivity";
     Toolbar toolbar;
     NavigationView nvDrawer;
@@ -71,6 +71,11 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
     Intent trackIntent;
     PendingIntent pendingIntent;
     SharedPreferences sharedPreferences;
+
+    Button buttonChat
+            , buttonSend
+            , buttonMap
+            , buttonKondisi;
 
     Realm realm;
     RealmConfiguration realmConfiguration;
@@ -120,7 +125,20 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+
+        // Button bawah.
+        buttonChat = (Button) findViewById(R.id.button_chat);
+        buttonSend = (Button) findViewById(R.id.button_send);
+        buttonMap = (Button) findViewById(R.id.button_map);
+        buttonKondisi = (Button) findViewById(R.id.button_kondisi);
+
+        buttonChat.setOnClickListener(this);
+        buttonSend.setOnClickListener(this);
+        buttonMap.setOnClickListener(this);
+        buttonKondisi.setOnClickListener(this);
     }
+
+
 
     private void trackLocation() {
         if (!googlePlayEnabled()) return;
@@ -159,12 +177,7 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
             case R.id.nav_home_map:
                 fragmentClass = MyMapFragment.class;
                 break;
-            /*
-            case R.id.nav_condition_health:
-                fragmentClass = HealthFragment.class;
-                break;
-            */
-            case R.id.nav_condition_ammunition:
+            case R.id.nav_condition:
                 fragmentClass = AmmunitionFragment.class;
                 break;
             case R.id.nav_communication_chat:
@@ -173,17 +186,7 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
             case R.id.nav_communicator_send_file:
                 Intent pickFileIntent = new Intent(MainActivity.this, WusDatActivity.class);
                 startActivityForResult(pickFileIntent, 0);
-                // fragmentClass = SendFileFragment.class;
-                // startActivityForResult((new Intent(MainActivity.this, WusDatActivity.class)), 1);
-                // startActivity(new Intent(getApplicationContext(), WusDatActivity.class));
                 return;
-            // fragmentClass = PickFileFragment.class;
-            // break;
-            /*
-            case R.id.nav_condition:
-                fragmentClass = HealthFragment.class;
-                break;
-            */
             default:
                 fragmentClass = MyMapFragment.class;
         }
@@ -353,6 +356,36 @@ public class MainActivity extends AppCompatActivity implements UploadStatusDeleg
 
         linearLayout.removeView(uploadProgressViewHolderMap.get(uploadInfo.getUploadId()).itemView);
         uploadProgressViewHolderMap.remove(uploadInfo.getUploadId());
+    }
+
+    @Override
+    public void onClick(View v) {
+        Fragment fragment = null;
+        Class fragmentClass = null;
+        switch (v.getId()) {
+            case R.id.button_chat:
+                fragmentClass = ChatFragment.class;
+                break;
+            case R.id.button_send:
+                Intent pickFileIntent = new Intent(MainActivity.this, WusDatActivity.class);
+                startActivityForResult(pickFileIntent, 0);
+                return;
+            case R.id.button_map:
+                fragmentClass = MyMapFragment.class;
+                break;
+            case R.id.button_kondisi:
+                fragmentClass = AmmunitionFragment.class;
+                break;
+        }
+        try {
+            fragment = (Fragment) fragmentClass.newInstance();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.flContent, fragment)
+                    .commit();
+        } catch (InstantiationException | IllegalAccessException e) {
+            Snackbar.make(v, "unable thingy whatever.", Snackbar.LENGTH_LONG).show();
+        }
     }
 
     class UploadProgressViewHolder {

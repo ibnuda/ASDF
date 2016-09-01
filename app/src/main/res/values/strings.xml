@@ -24,13 +24,13 @@
     <string name="ammunition">Ammunition</string>
     <string name="_100">100</string>
     <string name="_90">90</string>
-    <string name="send_file">Send File</string>
+    <string name="send_file">Kirim berkas</string>
     <string name="chat">Chat</string>
     <string name="communication">Communication</string>
     <string name="menu">Menu</string>
     <string name="health">Health</string>
     <string name="status">Status</string>
-    <string name="map">Map</string>
+    <string name="map">Peta</string>
     <string name="button_pick_file">Please pick the file you want to send</string>
     <string name="button_send_file">SEND THE FILE</string>
 
@@ -47,4 +47,5 @@
     <string name="name_of_file">Name</string>
     <string name="upload_progress">Upload progress: %s</string>
     <string name="cancel_upload">Cancel upload</string>
+    <string name="kondisi">Kondisi</string>
 </resources>

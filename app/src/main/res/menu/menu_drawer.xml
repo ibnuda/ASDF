@@ -11,7 +11,7 @@
             android:id="@+id/nav_home_map"
             android:title="@string/map"/>
         <item
-            android:id="@+id/nav_condition_ammunition"
-            android:title="@string/ammunition"/>
+            android:id="@+id/nav_condition"
+            android:title="@string/kondisi"/>
     </group>
 </menu>
