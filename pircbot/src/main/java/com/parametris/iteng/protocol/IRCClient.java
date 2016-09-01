@@ -833,4 +833,16 @@ public abstract class IRCClient {
         }
         return userArray;
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public final void identify(String password) {
+        this.sendRawLine("NICKSERVE IDENTIFY " + password);
+    }
 }

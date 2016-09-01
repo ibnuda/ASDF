@@ -166,9 +166,7 @@ public class IRCService extends Service {
             stopForegroundArgs[0] = Boolean.TRUE;
             try {
                 stopForeground.invoke(this, stopForegroundArgs);
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+            } catch (InvocationTargetException | IllegalAccessException e) {
                 e.printStackTrace();
             }
         } else {
@@ -177,9 +175,7 @@ public class IRCService extends Service {
             try {
                 Method setForeground = getClass().getMethod("setForeground", setForegroundSignature);
                 setForeground.invoke(this, new Object[] {true});
-            } catch (NoSuchMethodException | IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
         }
@@ -209,5 +205,29 @@ public class IRCService extends Service {
 
     public void connect(final Server server) {
 
+    }
+
+    public synchronized void notifyConnected(String title) {
+        connectedServerTitles.add(title);
+        updateNotification("Tersambung ke " + title, null, false, false, true);
+    }
+
+    public synchronized void addNewMention(int id, Conversation conversation, String s, boolean vibrateHighlightEnabled, boolean soundHighlightEnabled, boolean ledHighlightEnabled) {
+        if (null == conversation) {
+            return;
+        }
+        conversation.addNewMention();
+        ++newMentions;
+        String conversationId = getConversationId(id, conversation.getName());
+
+        if (mentions.containsKey(conversationId)) {
+            mentions.put(conversationId, conversation);
+        }
+
+        if (1 == newMentions) {
+            updateNotification(s, s, vibrateHighlightEnabled, soundHighlightEnabled, ledHighlightEnabled);
+        } else {
+            updateNotification(s, null, vibrateHighlightEnabled, soundHighlightEnabled, ledHighlightEnabled);
+        }
     }
 }

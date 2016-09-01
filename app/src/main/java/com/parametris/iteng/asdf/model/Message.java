@@ -70,6 +70,10 @@ public class Message {
         this(text, sender, TYPE_MESSAGE);
     }
 
+    public Message(String text, int type) {
+        this(text, null, type);
+    }
+
     public void setIcon(int icon) {
         this.icon = icon;
     }
