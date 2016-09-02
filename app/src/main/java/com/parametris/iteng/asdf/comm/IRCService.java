@@ -16,7 +16,6 @@ import com.parametris.iteng.asdf.model.Conversation;
 import com.parametris.iteng.asdf.model.Server;
 import com.parametris.iteng.asdf.model.Settings;
 import com.parametris.iteng.asdf.receiver.ReconnectReceiver;
-import com.parametris.iteng.protocol.IRCClient;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,7 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
 
 public class IRCService extends Service {
     public static final String ACTION_FOREGROUND = "service.foreground";
@@ -336,6 +334,27 @@ public class IRCService extends Service {
             foreground = false;
             stopForegroundCompat(R.string.app_name);
             stopSelf();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        if (foreground) {
+            stopForegroundCompat(R.string.app_name);
+        }
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        synchronized (alarmIntentsLock) {
+            for (PendingIntent pendingIntent : alarmIntents.values()) {
+                alarmManager.cancel(pendingIntent);
+            }
+            for (ReconnectReceiver reconnectReceiver : alarmReceivers.values()) {
+                unregisterReceiver(reconnectReceiver);
+            }
+
+            alarmIntents.clear();
+            alarmIntents = null;
+            alarmReceivers.clear();
+            alarmReceivers = null;
         }
     }
 
