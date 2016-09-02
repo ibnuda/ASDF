@@ -183,4 +183,8 @@ public class Server {
         }
         return channels;
     }
+
+    public boolean isDisconnected() {
+        return status == Status.DISCONNECTED;
+    }
 }

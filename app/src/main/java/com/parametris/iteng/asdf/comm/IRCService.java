@@ -1,5 +1,6 @@
 package com.parametris.iteng.asdf.comm;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -7,6 +8,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 
+import com.parametris.iteng.asdf.ASDF;
 import com.parametris.iteng.asdf.R;
 import com.parametris.iteng.asdf.activity.MainActivity;
 import com.parametris.iteng.asdf.model.Broadcast;
@@ -14,12 +16,15 @@ import com.parametris.iteng.asdf.model.Conversation;
 import com.parametris.iteng.asdf.model.Server;
 import com.parametris.iteng.asdf.model.Settings;
 import com.parametris.iteng.asdf.receiver.ReconnectReceiver;
+import com.parametris.iteng.protocol.IRCClient;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Objects;
 
 public class IRCService extends Service {
     public static final String ACTION_FOREGROUND = "service.foreground";
@@ -102,6 +107,14 @@ public class IRCService extends Service {
         handleCommand(intent);
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (null != intent) {
+            handleCommand(intent);
+        }
+        return 1;
+    }
+
     private void handleCommand(Intent intent) {
         if (ACTION_FOREGROUND.equals(intent.getAction())) {
             if (foreground) {
@@ -153,6 +166,48 @@ public class IRCService extends Service {
     private void updateNotification(String text, String contentText, boolean vibrate, boolean sound, boolean light) {
         if (foreground) {
             Intent intentNotify = new Intent(this, MainActivity.class);
+            intentNotify.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intentNotify, 0);
+
+            if (null != contentText) {
+                if (newMentions >= 1) {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (Conversation conversation : mentions.values()) {
+                        stringBuilder.append(conversation.getName() + " (" + conversation.getNewMentions() + ", ");
+                    }
+                    contentText = "Ada pesan baru di " + stringBuilder.substring(0, stringBuilder.length() - 2);
+                } else if (!connectedServerTitles.isEmpty()) {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (String title : connectedServerTitles) {
+                        stringBuilder.append(title + ", ");
+                    }
+                    contentText = "Tersambung ke " + stringBuilder.substring(0, stringBuilder.length() - 2);
+                } else {
+                    contentText = "Belum tersambung.";
+                }
+
+                notification = new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_media_play)
+                        .setContentTitle(getText(R.string.app_name))
+                        .setContentText(contentText)
+                        .setWhen(System.currentTimeMillis())
+                        .setContentIntent(pendingIntent)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+                        .build();
+
+                if (vibrate) {
+                    notification.defaults |= Notification.DEFAULT_VIBRATE;
+                }
+                if (sound) {
+                    notification.defaults |= Notification.DEFAULT_SOUND;
+                }
+                if (light) {
+                    notification.flags |= Notification.FLAG_SHOW_LIGHTS;
+                }
+                notification.number = newMentions;
+                notificationManager.notify(FOREGROUND_NOTIFICATION, notification);
+            }
         }
     }
 
@@ -187,16 +242,13 @@ public class IRCService extends Service {
             startForegroundArgs[1] = notification;
             try {
                 startForeground.invoke(this, startForegroundArgs);
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
+            } catch (InvocationTargetException | IllegalAccessException e) {
             }
         } else {
             try {
                 Method setForeground = getClass().getMethod("setForeground", setForegroundSignature);
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+                setForeground.invoke(this, new Object[] {true});
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             }
 
             notificationManager.notify(foregroundNotification, notification);
@@ -209,7 +261,7 @@ public class IRCService extends Service {
 
     public synchronized void notifyConnected(String title) {
         connectedServerTitles.add(title);
-        updateNotification("Tersambung ke " + title, null, false, false, true);
+        updateNotification("Tersambung ke " + title, null, false, false, false);
     }
 
     public synchronized void addNewMention(int id, Conversation conversation, String s, boolean vibrateHighlightEnabled, boolean soundHighlightEnabled, boolean ledHighlightEnabled) {
@@ -229,5 +281,65 @@ public class IRCService extends Service {
         } else {
             updateNotification(s, null, vibrateHighlightEnabled, soundHighlightEnabled, ledHighlightEnabled);
         }
+    }
+
+    public synchronized void notifyDisconnected(String title) {
+        connectedServerTitles.remove(title);
+        updateNotification("Tidak lagi tersambung ke " + title, null, false, false, false);
+    }
+
+    public synchronized IRCConnection getConnection(int serverId) {
+        IRCConnection ircConnection = connections.get(serverId);
+        if (null == ircConnection) {
+            ircConnection = new IRCConnection(this, serverId);
+            connections.put(serverId, ircConnection);
+        }
+        return ircConnection;
+    }
+
+    public boolean hasConnection(int serverId) {
+        return connections.containsKey(serverId);
+    }
+
+    public void checkServiceStatus() {
+        boolean shutdown = true;
+        List<Server> servers = ASDF.getInstance().getServers();
+        for (final Server server : servers) {
+            if (server.isDisconnected() && !server.isMayReconnect()) {
+                int serverId = server.getId();
+                synchronized (this) {
+                    IRCConnection connection = connections.get(serverId);
+                    if (null != connection) {
+                        connection.dispose();
+                    }
+                    connections.remove(serverId);
+                }
+                synchronized (alarmIntentsLock) {
+                    PendingIntent pendingIntent = alarmIntents.get(serverId);
+                    if (null != pendingIntent) {
+                        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                        alarmManager.cancel(pendingIntent);
+                        alarmIntents.remove(serverId);
+                    }
+                    ReconnectReceiver reconnectReceiver = alarmReceivers.get(serverId);
+                    if (null != reconnectReceiver) {
+                        unregisterReceiver(reconnectReceiver);
+                        alarmReceivers.remove(serverId);
+                    }
+                }
+            } else {
+                shutdown = false;
+            }
+        }
+
+        if (shutdown) {
+            foreground = false;
+            stopForegroundCompat(R.string.app_name);
+            stopSelf();
+        }
+    }
+
+    public HashMap<Integer, IRCConnection> getConnections() {
+        return connections;
     }
 }

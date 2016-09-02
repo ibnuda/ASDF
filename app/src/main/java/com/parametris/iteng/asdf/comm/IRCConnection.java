@@ -165,11 +165,28 @@ public class IRCConnection extends IRCClient {
         }
     }
 
+    @Override
+    protected void onKick(String target, String sourceNick, String sourceLogin, String sourceHostname, String recipient, String substring) {
+        if (recipient.equals(getNick())) {
+        }
+    }
+
     private boolean isMentioned(String text) {
         return nickMatch.matcher(text).find();
     }
 
     private void updateNickMatchPattern() {
         nickMatch = Pattern.compile("(?:^|[\\s?!'�:;,.])"+Pattern.quote(getNick())+"(?:[\\s?!'�:;,.]|$)", Pattern.CASE_INSENSITIVE);
+    }
+
+    @Override
+    public void dispose() {
+        synchronized (quitLock) {
+            if (quit) {
+                disposedRequest = true;
+            } else {
+                super.dispose();
+            }
+        }
     }
 }

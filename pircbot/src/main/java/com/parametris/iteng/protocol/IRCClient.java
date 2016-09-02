@@ -845,4 +845,13 @@ public abstract class IRCClient {
     public final void identify(String password) {
         this.sendRawLine("NICKSERVE IDENTIFY " + password);
     }
+
+    public synchronized void dispose() {
+        if (null != this.outputThread) {
+            outputThread.interrupt();
+        }
+        if (null != this.inputThread) {
+            inputThread.dispose();
+        }
+    }
 }
