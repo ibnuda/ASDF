@@ -22,4 +22,8 @@ public class ConversationTabLayout extends HorizontalScrollView {
     public ConversationTabLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
+    
+    public void update() {
+    }
+
 }

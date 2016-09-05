@@ -27,17 +27,13 @@ import com.parametris.iteng.asdf.adapter.ConversationPagerAdapter;
 import com.parametris.iteng.asdf.comm.IRCBinder;
 import com.parametris.iteng.asdf.listener.ConversationListener;
 import com.parametris.iteng.asdf.listener.ServerListener;
-import com.parametris.iteng.asdf.model.Conversation;
-import com.parametris.iteng.asdf.model.Extra;
-import com.parametris.iteng.asdf.model.Message;
-import com.parametris.iteng.asdf.model.ScrollBack;
-import com.parametris.iteng.asdf.model.Server;
-import com.parametris.iteng.asdf.model.Settings;
+import com.parametris.iteng.asdf.model.*;
 import com.parametris.iteng.asdf.receiver.ConversationReceiver;
 import com.parametris.iteng.asdf.receiver.ServerReceiver;
 import com.parametris.iteng.asdf.view.ConversationTabLayout;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 
@@ -284,7 +280,28 @@ public class ChatFragment extends Fragment implements ServerListener, Conversati
 
         Toolbar.LayoutParams params = new Toolbar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 
+        if (Status.PRE_CONNECTING == server.getStatus()) {
+            server.clearConversations();
+            pagerAdapter.clearConversation();
+            server.getConversation(ServerInfo.DEFAULT_NAME).setHistorySize(settings.getHistorySize());
+        }
+
+        Collection<Conversation> conversations = server.getConversations();
+
+        for (Conversation conversation : conversations) {
+            if (Conversation.STATUS_SELECTED == conversation.getStatus()) {
+                onNewConversation(conversation.getName());
+            } else {
+                createNewConversation(conversation.getName());
+            }
+        }
+
         return inflater.inflate(R.layout.fragment_chat, container, false);
+    }
+
+    private void createNewConversation(String name) {
+        pagerAdapter.addConversation(server.getConversation(name));
+        tabLayout.update();
     }
 
     @Override
