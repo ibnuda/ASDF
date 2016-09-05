@@ -48,4 +48,8 @@
     <string name="upload_progress">Upload progress: %s</string>
     <string name="cancel_upload">Cancel upload</string>
     <string name="kondisi">Kondisi</string>
+    <string name="connect">Sambung</string>
+    <string name="disconnect">Putus</string>
+    <string name="edit">Ubah</string>
+    <string name="delete">Hapus</string>
 </resources>

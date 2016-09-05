@@ -17,7 +17,7 @@ import java.util.LinkedList;
  */
 public class ConversationPagerAdapter extends PagerAdapter {
     private final Server server;
-    private LinkedList<ConversationInfo> conversationInfos;
+    private LinkedList<ConversationInfo> conversationInfo;
     private final HashMap<Integer, View> viewHashMap;
 
     public class ConversationInfo {
@@ -34,17 +34,17 @@ public class ConversationPagerAdapter extends PagerAdapter {
 
     public ConversationPagerAdapter(Context context, Server server) {
         this.server = server;
-        conversationInfos = new LinkedList<>();
+        conversationInfo = new LinkedList<>();
         viewHashMap = new HashMap<>();
     }
 
     public void addConversation(Conversation conversation) {
-        conversationInfos.add(new ConversationInfo(conversation));
+        conversationInfo.add(new ConversationInfo(conversation));
         notifyDataSetChanged();
     }
 
     public void removeConversation(Conversation conversation) {
-        conversationInfos.remove(conversation);
+        conversationInfo.remove(conversation);
         notifyDataSetChanged();
     }
 
@@ -71,15 +71,15 @@ public class ConversationPagerAdapter extends PagerAdapter {
     }
 
     private ConversationInfo getItemInfo(int position) {
-        if (0 <= position && position <= conversationInfos.size()) {
-            return conversationInfos.get(position);
+        if (0 <= position && position <= conversationInfo.size()) {
+            return conversationInfo.get(position);
         }
         return null;
     }
 
     public int getPositionByName(String name) {
-        int size = conversationInfos.size();
-        LinkedList<ConversationInfo> items = this.conversationInfos;
+        int size = conversationInfo.size();
+        LinkedList<ConversationInfo> items = this.conversationInfo;
         for (int i = 0; i < size; i++) {
             if (items.get(i).conversation.getName().equals(name)) {
                 return i;
@@ -89,12 +89,12 @@ public class ConversationPagerAdapter extends PagerAdapter {
     }
 
     public void clearConversation() {
-        conversationInfos = new LinkedList<>();
+        conversationInfo = new LinkedList<>();
     }
 
     @Override
     public int getCount() {
-        return this.conversationInfos.size();
+        return this.conversationInfo.size();
     }
 
     @Override
@@ -104,7 +104,7 @@ public class ConversationPagerAdapter extends PagerAdapter {
 
     @Override
     public Object instantiateItem(View collection, int position) {
-        ConversationInfo conversationInfo = conversationInfos.get(position);
+        ConversationInfo conversationInfo = this.conversationInfo.get(position);
         View view;
 
         if (null != conversationInfo.messageListView) {
