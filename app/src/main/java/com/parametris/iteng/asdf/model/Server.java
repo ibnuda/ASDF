@@ -187,4 +187,8 @@ public class Server {
     public boolean isDisconnected() {
         return status == Status.DISCONNECTED;
     }
+
+    public boolean isConnected() {
+        return status == Status.CONNECTED;
+    }
 }

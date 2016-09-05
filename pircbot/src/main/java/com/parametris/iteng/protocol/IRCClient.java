@@ -38,44 +38,36 @@ public abstract class IRCClient {
     public static final int OP_REMOVE = 2;
     public static final int VOICE_ADD = 3;
     public static final int VOICE_REMOVE = 4;
-
+    private static final String version = "notice me senpai.";
+    private static final String finger = "finger...";
+    private final Queue outputQueue = new Queue();
+    private final Hashtable<String, String> topics = new Hashtable<>();
+    private final List<String> aliases = new ArrayList<>();
+    private final String channelPrefix = "#&+!";
     private InputThread inputThread = null;
     private OutputThread outputThread = null;
     private String charset = null;
     private InetAddress inetAddress = null;
     private Socket socket = null;
-
     private String server = null;
     private int port = -1;
     private String password = null;
-
-    private final Queue outputQueue = new Queue();
     private long messageDelay = 1000;
-
     private String saslUsername;
     private String saslPassword;
-
     private Hashtable<String, Hashtable<User, User>> channels = new Hashtable<>();
-    private final Hashtable<String, String> topics = new Hashtable<>();
-
     private int[] dccPort = null;
     private InetAddress dccInetAddress = null;
-
     private boolean autoNickChange = false;
     private int autoNickTries = 1;
     private boolean useSSL = false;
     private boolean registered = false;
-
     private String name = "Yuhu";
-    private final List<String> aliases = new ArrayList<>();
     private String nick = name;
     private String login = "Yuhu";
-    private final String channelPrefix = "#&+!";
-    
-    private static final String version = "notice me senpai.";
-    private static final String finger = "finger...";
 
-    public IRCClient() {}
+    public IRCClient() {
+    }
 
     public String getVersion() {
         return version;
@@ -358,7 +350,7 @@ public abstract class IRCClient {
     }
 
     protected void onInvite(String target, String sourceNick, String sourceLogin, String sourceHostname, String substring) {
-        
+
     }
 
     protected void onTopic(String target, String substring, String sourceNick, long l, boolean b) {
@@ -418,7 +410,7 @@ public abstract class IRCClient {
                     }
                 } else if (atPos == 'b') {
                     if (pn == '+') {
-                        onSetChannelBan(channel, sourceNick, sourceLogin, sourceHostname,params[p]);
+                        onSetChannelBan(channel, sourceNick, sourceLogin, sourceHostname, params[p]);
                     } else {
                         onRemoveChannelBan(channel, sourceNick, sourceLogin, sourceHostname, params[p]);
                     }
@@ -623,14 +615,15 @@ public abstract class IRCClient {
 
     }
 
-    private final void removeUser(String  nick) {
+    private final void removeUser(String nick) {
         synchronized (this.channels) {
             Enumeration<String> enumeration = this.channels.keys();
             while (enumeration.hasMoreElements()) {
                 String channel = enumeration.nextElement();
                 this.removeUser(channel, nick);
             }
-        };
+        }
+        ;
     }
 
     private final User removeUser(String target, String sourceNick) {
@@ -646,7 +639,7 @@ public abstract class IRCClient {
     }
 
     protected void onJoin(String channel, String sourceNick, String sourceLogin, String sourceHostname) {
-        
+
     }
 
     private final void addUser(String channel, User user) {
@@ -680,7 +673,7 @@ public abstract class IRCClient {
     }
 
     protected void onAction(String sourceNick, String sourceLogin, String sourceHostname, String target, String substring) {
-        
+
     }
 
     protected void onVersion(String sourceNick, String sourceLogin, String sourceHostname, String target) {
@@ -701,7 +694,7 @@ public abstract class IRCClient {
     }
 
     protected void onNickChange(String oldNick, String login, String s, String nick) {
-        
+
     }
 
     public final List<String> getAliases() {
@@ -756,14 +749,11 @@ public abstract class IRCClient {
                     String prefix = "";
                     if (nick.startsWith("@")) {
                         prefix = "@";
-                    }
-                    else if (nick.startsWith("+")) {
+                    } else if (nick.startsWith("+")) {
                         prefix = "+";
-                    }
-                    else if (nick.startsWith(".")) {
+                    } else if (nick.startsWith(".")) {
                         prefix = ".";
-                    }
-                    else if (nick.startsWith("%")) {
+                    } else if (nick.startsWith("%")) {
                         prefix = "%";
                     }
                     nick = nick.substring(prefix.length());
@@ -786,7 +776,7 @@ public abstract class IRCClient {
     }
 
     private void onChannelInfo(String channel, int userCount, String topic) {
-        
+
     }
 
     private void onServerResponse(int code, String response) {
@@ -805,8 +795,16 @@ public abstract class IRCClient {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public String getLogin() {
         return this.login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
     }
 
     public String getNick() {
@@ -834,14 +832,6 @@ public abstract class IRCClient {
         return userArray;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
     public final void identify(String password) {
         this.sendRawLine("NICKSERVE IDENTIFY " + password);
     }
@@ -853,5 +843,21 @@ public abstract class IRCClient {
         if (null != this.inputThread) {
             inputThread.dispose();
         }
+    }
+
+    public final void sendMessage(String name, String pesan) {
+        this.outputQueue.add("PRIVMSG " + name + " :" + pesan);
+    }
+
+    public String[] getUsersAsStringArray(String channel) {
+        User[] userArray = getUsers(channel);
+        int mLength = userArray.length;
+        String[] users = new String[mLength];
+
+        for (int i = 0; i < mLength; i++) {
+            users[i] = userArray[i].getPrefix() + userArray[i].getNick();
+        }
+
+        return users;
     }
 }

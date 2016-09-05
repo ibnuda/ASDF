@@ -52,4 +52,6 @@
     <string name="disconnect">Putus</string>
     <string name="edit">Ubah</string>
     <string name="delete">Hapus</string>
+    <string name="message_not_connected">belum nyambung.</string>
+    <string name="chat_only_from_channel">Hanya bisa chat melalui channel.</string>
 </resources>

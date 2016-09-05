@@ -1,9 +1,11 @@
 package com.parametris.iteng.asdf.adapter;
 
 import android.content.Context;
+import android.database.DataSetObserver;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.TextView;
 
 import com.parametris.iteng.asdf.model.Conversation;
 import com.parametris.iteng.asdf.model.Message;
@@ -34,21 +36,29 @@ public class MessageListAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return 0;
+        return messages.size();
     }
 
     @Override
-    public Object getItem(int position) {
-        return null;
+    public Message getItem(int position) {
+        return messages.get(position);
     }
 
     @Override
     public long getItemId(int position) {
-        return 0;
+        return position;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        return null;
+        return getItem(position).renderTextView(context, (TextView) convertView);
+    }
+
+    @Override
+    public void unregisterDataSetObserver(DataSetObserver observer) {
+        if (null == observer) {
+            return;
+        }
+        super.unregisterDataSetObserver(observer);
     }
 }

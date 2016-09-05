@@ -46,8 +46,6 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
     List<LatLng> routePoints = new ArrayList<>();
     Polyline route;
 
-    // TODO : Save the track history.
-    // STILL HAVEN'T SAVED YET!!!
     Realm realm;
     Utils utils;
 
@@ -97,7 +95,6 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
             routePoints = getAllRoutePoints(realm);
         }
 
-        // TODO : Refactor this
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(
                 new BroadcastReceiver() {
                     @Override
@@ -160,12 +157,14 @@ public class MyMapFragment extends Fragment implements OnMapReadyCallback {
         marker.setVisible(true);
 
         // while these ones shows the tracks.
+        /*
         route = googleMap.addPolyline(new PolylineOptions()
                 .width(10)
                 .color(Color.BLACK)
                 .geodesic(true));
 
         route.setPoints(routePoints);
+        */
 
         googleMap.animateCamera(cameraUpdate);
         googleMap.moveCamera(cameraUpdate);
