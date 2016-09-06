@@ -6,6 +6,7 @@ import android.support.v4.view.ViewPager;
 import android.view.View;
 import com.parametris.iteng.asdf.listener.MessageClickListener;
 import com.parametris.iteng.asdf.model.Conversation;
+import com.parametris.iteng.asdf.model.Message;
 import com.parametris.iteng.asdf.model.Server;
 import com.parametris.iteng.asdf.view.MessageListView;
 
@@ -19,6 +20,17 @@ public class ConversationPagerAdapter extends PagerAdapter {
     private final Server server;
     private LinkedList<ConversationInfo> conversationInfo;
     private final HashMap<Integer, View> viewHashMap;
+
+    public int getItemPositionByName(String target) {
+        int size = conversationInfo.size();
+        LinkedList<ConversationInfo> items = this.conversationInfo;
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).conversation.getName().equalsIgnoreCase(target)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     public class ConversationInfo {
         public Conversation conversation;

@@ -1,5 +1,6 @@
 package com.parametris.iteng.asdf.fragment;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -339,12 +340,17 @@ public class ChatFragment extends Fragment implements ServerListener, Conversati
 
     @Override
     public void onNewConversation(String target) {
-
+        createNewConversation(target);
+        viewPager.setCurrentItem(pagerAdapter.getCount() - 1);
     }
 
     @Override
     public void onRemoveConversation(String target) {
-
+        int position = pagerAdapter.getItemPositionByName(target);
+        if (-1 != position) {
+            pagerAdapter.removeConversation(position);
+        }
+        tabLayout.update();
     }
 
     @Override
@@ -354,7 +360,34 @@ public class ChatFragment extends Fragment implements ServerListener, Conversati
 
     @Override
     public void onStatusUpdate() {
+        if (server.isConnected()) {
+            inputEditText.setEnabled(true);
+        } else {
+            inputEditText.setEnabled(false);
+            if (Status.CONNECTING == server.getStatus()) {
+                return;
+            }
+            if (null == ircBinder || null == ircBinder.getIrcService() || null == ircBinder.getIrcService().getSettings()) {
+                if (null == snackbar) {
+                    snackbar = Snackbar.make(viewPager, "disconnected from " + server.getTitle(), Snackbar.LENGTH_INDEFINITE);
 
+                    snackbar.setAction("Sambungin lagi.", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (!server.isDisconnected()) {
+                                return;
+                            }
+                            ircBinder.getIrcService().getConnection(server.getId());
+                            server.setStatus(Status.CONNECTING);
+                            ircBinder.connect(server);
+                        }
+                    });
+                }
+                if (!snackbar.isShown()) {
+                    snackbar.show();
+                }
+            }
+        }
     }
 
     @Override
@@ -450,5 +483,26 @@ public class ChatFragment extends Fragment implements ServerListener, Conversati
         getActivity().unbindService(this);
         getActivity().unregisterReceiver(conversationReceiver);
         getActivity().unregisterReceiver(serverReceiver);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (Activity.RESULT_OK != resultCode) {
+            return;
+        }
+
+        switch (requestCode) {
+            case REQUEST_CODE_JOIN:
+                joinChannelBuffer = data.getExtras().getString("channel");
+                break;
+            case REQUEST_CODE_USERS:
+                // TODO: 9/6/2016 UserActivity? For what? Investigate.
+                break;
+            case REQUEST_CODE_NICK_COMPLETION:
+                insertNickCompletion(inputEditText, data.getExtras().getString(Extra.USER));
+                break;
+            case REQUEST_CODE_USER:
+                break;
+        }
     }
 }
