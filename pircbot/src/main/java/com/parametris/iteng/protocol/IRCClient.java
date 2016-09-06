@@ -860,4 +860,8 @@ public abstract class IRCClient {
 
         return users;
     }
+
+    public void joinChannel(String joinChannelBuffer) {
+        this.sendRawLine("JOIN " + joinChannelBuffer);
+    }
 }

@@ -12,7 +12,7 @@ public class ConversationReceiver extends BroadcastReceiver {
     private final ConversationListener conversationListener;
     private final int serverId;
 
-    public ConversationReceiver(ConversationListener conversationListener, int serverId) {
+    public ConversationReceiver(int serverId, ConversationListener conversationListener) {
         this.conversationListener = conversationListener;
         this.serverId = serverId;
     }

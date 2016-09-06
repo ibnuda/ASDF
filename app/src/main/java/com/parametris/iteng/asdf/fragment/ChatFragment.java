@@ -3,6 +3,7 @@ package com.parametris.iteng.asdf.fragment;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -11,6 +12,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.text.method.TextKeyListener;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -18,13 +20,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageButton;
 
 import com.parametris.iteng.asdf.ASDF;
 import com.parametris.iteng.asdf.MapsActivity;
 import com.parametris.iteng.asdf.R;
 import com.parametris.iteng.asdf.activity.MainActivity;
 import com.parametris.iteng.asdf.adapter.ConversationPagerAdapter;
+import com.parametris.iteng.asdf.adapter.MessageListAdapter;
 import com.parametris.iteng.asdf.comm.IRCBinder;
+import com.parametris.iteng.asdf.comm.IRCService;
 import com.parametris.iteng.asdf.listener.ConversationListener;
 import com.parametris.iteng.asdf.listener.ServerListener;
 import com.parametris.iteng.asdf.model.*;
@@ -296,6 +301,29 @@ public class ChatFragment extends Fragment implements ServerListener, Conversati
             }
         }
 
+        int setInputTypeFlags = 0;
+        setInputTypeFlags |= InputType.TYPE_TEXT_FLAG_AUTO_CORRECT;
+        setInputTypeFlags |= InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
+        setInputTypeFlags |= InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE;
+
+        inputEditText.setInputType(inputEditText.getInputType() | setInputTypeFlags);
+        ImageButton sendButton = (ImageButton) view.findViewById(R.id.send);
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (0 < inputEditText.length()) {
+                    sendCurrentMessage();
+                }
+            }
+        });
+
+        sendButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                doNickCompletion(inputEditText);
+                return true;
+            }
+        });
         return inflater.inflate(R.layout.fragment_chat, container, false);
     }
 
@@ -331,11 +359,96 @@ public class ChatFragment extends Fragment implements ServerListener, Conversati
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
+        this.ircBinder = (IRCBinder) service;
 
+        if (Status.PRE_CONNECTING == server.getStatus() && getArguments().containsKey("connect")) {
+            server.setStatus(Status.CONNECTING);
+            ircBinder.connect(server);
+        } else {
+            onStatusUpdate();
+        }
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
+        this.ircBinder = null;
+    }
 
+    @Override
+    public void onResume() {
+        conversationReceiver = new ConversationReceiver(server.getId(), this);
+        getActivity().registerReceiver(conversationReceiver, new IntentFilter(Broadcast.CONVERSATION_MESSAGE));
+        getActivity().registerReceiver(conversationReceiver, new IntentFilter(Broadcast.CONVERSATION_NEW));
+        getActivity().registerReceiver(conversationReceiver, new IntentFilter(Broadcast.CONVERSATION_REMOVE));
+        getActivity().registerReceiver(conversationReceiver, new IntentFilter(Broadcast.CONVERSATION_TOPIC));
+
+        serverReceiver = new ServerReceiver(this);
+        getActivity().registerReceiver(serverReceiver, new IntentFilter(Broadcast.SERVER_UPDATE));
+
+        super.onResume();
+
+        Intent intent = new Intent(getActivity(), IRCService.class);
+        intent.setAction(IRCService.ACTION_FOREGROUND);
+        getActivity().startService(intent);
+        getActivity().bindService(intent, this, 0);
+
+        inputEditText.setEnabled(server.isConnected());
+
+        Collection<Conversation> conversations = server.getConversations();
+        MessageListAdapter messageListAdapter;
+
+        for (Conversation conversation : conversations) {
+            String name = conversation.getName();
+            messageListAdapter = pagerAdapter.getItemAdapter(name);
+
+            if (null != messageListAdapter) {
+                messageListAdapter.addBulkMessage(conversation.getBuffer());
+                conversation.cleanBuffer();
+            } else {
+                if (-1 == pagerAdapter.getPositionByName(name)) {
+                    onNewConversation(name);
+                }
+            }
+
+            if (Conversation.STATUS_SELECTED == conversation.getStatus() && 0 < conversation.getNewMentions()) {
+                Intent ackIntent = new Intent(getActivity(), IRCService.class);
+                ackIntent.setAction(IRCService.ACTION_ACK_NEW_MENTIONS);
+                ackIntent.putExtra(IRCService.EXTRA_ACK_SERVERID, serverId);
+                ackIntent.putExtra(IRCService.EXTRA_ACK_CONVTITLE, name);
+                getActivity().startService(intent);
+            }
+        }
+
+        int numViews = pagerAdapter.getCount();
+        if (numViews > conversations.size()) {
+            for (int i = 0; i < numViews; i++) {
+                if (conversations.contains(pagerAdapter.getItem(i))) {
+                    pagerAdapter.removeConversation(i--);
+                    --numViews;
+                }
+            }
+        }
+
+        if (null != joinChannelBuffer) {
+            new Thread() {
+                @Override
+                public void run() {
+                    ircBinder.getIrcService().getConnection(serverId).joinChannel(joinChannelBuffer);
+                }
+            }.start();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        server.setForeground(false);
+        if (null != ircBinder && null != ircBinder.getIrcService()) {
+            ircBinder.getIrcService().checkServiceStatus();
+        }
+        getActivity().unbindService(this);
+        getActivity().unregisterReceiver(conversationReceiver);
+        getActivity().unregisterReceiver(serverReceiver);
     }
 }

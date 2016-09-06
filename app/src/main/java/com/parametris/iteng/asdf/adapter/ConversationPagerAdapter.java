@@ -43,8 +43,8 @@ public class ConversationPagerAdapter extends PagerAdapter {
         notifyDataSetChanged();
     }
 
-    public void removeConversation(Conversation conversation) {
-        conversationInfo.remove(conversation);
+    public void removeConversation(int i) {
+        conversationInfo.remove(i);
         notifyDataSetChanged();
     }
 

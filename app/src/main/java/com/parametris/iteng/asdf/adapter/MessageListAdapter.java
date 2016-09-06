@@ -61,4 +61,20 @@ public class MessageListAdapter extends BaseAdapter {
         }
         super.unregisterDataSetObserver(observer);
     }
+
+    public void addMessage(Message message) {
+        messages.add(message);
+        if (messages.size() > historySize) {
+            messages.remove(0);
+        }
+        notifyDataSetChanged();
+    }
+
+    public void addBulkMessage(LinkedList<Message> messages) {
+        this.messages.addAll(messages);
+        while (messages.size() > historySize) {
+            messages.remove(0);
+        }
+        notifyDataSetChanged();
+    }
 }
