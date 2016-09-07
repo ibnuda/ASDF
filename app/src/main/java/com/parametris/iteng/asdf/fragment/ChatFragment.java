@@ -1,12 +1,14 @@
 package com.parametris.iteng.asdf.fragment;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
@@ -30,6 +32,7 @@ import com.parametris.iteng.asdf.activity.MainActivity;
 import com.parametris.iteng.asdf.adapter.ConversationPagerAdapter;
 import com.parametris.iteng.asdf.adapter.MessageListAdapter;
 import com.parametris.iteng.asdf.comm.IRCBinder;
+import com.parametris.iteng.asdf.comm.IRCConnection;
 import com.parametris.iteng.asdf.comm.IRCService;
 import com.parametris.iteng.asdf.listener.ConversationListener;
 import com.parametris.iteng.asdf.listener.ServerListener;
@@ -41,7 +44,6 @@ import com.parametris.iteng.asdf.view.ConversationTabLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 
 public class ChatFragment extends Fragment implements ServerListener, ConversationListener, ServiceConnection {
 
@@ -234,7 +236,7 @@ public class ChatFragment extends Fragment implements ServerListener, Conversati
         return nick;
     }
 
-    private void sendCurrentMessage() {
+    private void endCurrentendCurrentMessage() {
         sendMessage(inputEditText.getText().toString());
         TextKeyListener.clear(inputEditText.getText());
     }
@@ -326,6 +328,11 @@ public class ChatFragment extends Fragment implements ServerListener, Conversati
             }
         });
         return inflater.inflate(R.layout.fragment_chat, container, false);
+    }
+
+    private void sendCurrentMessage() {
+        sendMessage(inputEditText.getText().toString());
+        TextKeyListener.clear(inputEditText.getText());
     }
 
     private void createNewConversation(String name) {
@@ -502,6 +509,63 @@ public class ChatFragment extends Fragment implements ServerListener, Conversati
                 insertNickCompletion(inputEditText, data.getExtras().getString(Extra.USER));
                 break;
             case REQUEST_CODE_USER:
+                final int actionId = data.getExtras().getInt(Extra.ACTION);
+                final String nickname = data.getExtras().getString(Extra.USER);
+                final IRCConnection ircConnection = ircBinder.getIrcService().getConnection(server.getId());
+                final String conversation = server.getSelected();
+                final Handler handler = new Handler();
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                        }
+
+                        String nickWithoutPrefix = nickname;
+                        while (nickWithoutPrefix.startsWith("@")
+                                || nickWithoutPrefix.startsWith(".")
+                                || nickWithoutPrefix.startsWith("%")
+                                || nickWithoutPrefix.startsWith("+")) {
+                            nickWithoutPrefix = nickWithoutPrefix.substring(1);
+                        }
+                        switch (actionId) {
+                            case User.ACTION_REPLY:
+                                final String replyText = nickWithoutPrefix + " : ";
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        inputEditText.setText(replyText);
+                                        inputEditText.setSelection(replyText.length());
+                                    }
+                                });
+                                break;
+                            case User.ACTION_QUERY:
+                                Conversation query = server.getConversation(nickWithoutPrefix);
+                                if (null == query) {
+                                    query = new Query(nickWithoutPrefix);
+                                    server.addConversation(query);
+                                    Intent intent = Broadcast.createConversationIntent(Broadcast.CONVERSATION_NEW, server.getId(), nickWithoutPrefix);
+                                    ircBinder.getIrcService().sendBroadcast(intent);
+                                }
+                                break;
+                            case User.ACTION_OP:
+                                break;
+                            case User.ACTION_DEOP:
+                                break;
+                            case User.ACTION_VOICE:
+                                break;
+                            case User.ACTION_DEVOICE:
+                                break;
+                            case User.ACTION_KICK:
+                                break;
+                            case User.ACTION_BAN:
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }.start();
                 break;
         }
     }
